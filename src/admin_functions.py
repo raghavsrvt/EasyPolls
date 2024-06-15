@@ -39,6 +39,17 @@ added_posts_heading = []
 
 available_results = []
 
+def get_available_results():
+    global available_results
+    available_results = []
+    if os.path.exists(resource_path('src\\results')) == False:
+        os.makedirs(resource_path('src\\results'))
+    
+    src_dirs = os.listdir(resource_path('src\\results'))
+    for i in src_dirs:
+        if i.startswith('result-'):
+            available_results.append(i.split('-',1)[1]) # Add the name of available election result
+
 def styleAddedPosts(post_name,load_posts_layout):
     """
     Create the layout for displaying a post's details.
@@ -81,14 +92,7 @@ def loadPosts(main_layout):
         list: The updated main layout including the loaded posts.
     """
 
-    global available_results
-    if os.path.exists(resource_path('src\\results')) == False:
-        os.makedirs(resource_path('src\\results'))
-    
-    src_dirs = os.listdir(resource_path('src\\results'))
-    for i in src_dirs:
-        if i.startswith('result-'):
-            available_results.append(i.split('-',1)[1]) # Add the name of available election result
+    get_available_results()
     load_posts_layout = []
 
     cursor.execute('SELECT name FROM sqlite_master WHERE type="table"')
@@ -106,7 +110,7 @@ def loadPosts(main_layout):
             post_name = i[0]
             load_posts_layout = styleAddedPosts(post_name,load_posts_layout)
 
-    header_layout = [[sg.Text('Admin | EasyPolls',text_color='#4E46B4',font=(None,18,'bold')),sg.Push(),sg.Image(available_results_btn,key='check-results',visible=bool(available_results),enable_events=True),sg.Image(start_election_btn,key='start-elections-btn',visible=bool(tables),enable_events=True)]]
+    header_layout = [[sg.Text('Admin │ EasyPolls',text_color='#4E46B4',font=(None,18,'bold')),sg.Push(),sg.Image(available_results_btn,key='check-results',visible=bool(available_results),enable_events=True),sg.Image(start_election_btn,key='start-elections-btn',visible=bool(tables),enable_events=True)]]
     main_layout.insert(0,[sg.Frame('',header_layout,expand_x=True)])
     # Adding loaded posts to the main layout
     main_layout.append([sg.Column(load_posts_layout,key='posts-container',scrollable=True,vertical_scroll_only=True,expand_y=True,expand_x=True)])
@@ -345,7 +349,7 @@ def create_post_modal(post_name, no_of_candidates,window):
     
     
     # Create and display the modal window
-    post_modal = sg.Window(f'Add post information for {post_name}', post_modal_layout, size=(screen_width - 80, screen_height - 120), resizable=True,modal=True)
+    post_modal = sg.Window(f'Add post information for {post_name} post  •  EasyPolls  •  Made by Raghav Srivastava (GitHub: raghavsrvt)', post_modal_layout, size=(screen_width - 80, screen_height - 120), resizable=True,modal=True)
     
     while True:
         event, values = post_modal.read() 
@@ -368,7 +372,7 @@ def display_admin_panel():
             [sg.Image(add_post_btn, key='add-post-btn',pad=(9,10),enable_events=True)],
             ]
     layout = loadPosts(layout)
-    window = sg.Window('Admin | EasyPolls', layout, size=(screen_width - 80, screen_height - 120), resizable=True)
+    window = sg.Window('Admin  •  EasyPolls  •  Made by Raghav Srivastava (GitHub: raghavsrvt)', layout, size=(screen_width - 80, screen_height - 120), resizable=True)
     
     while True:
         event, values = window.read() 
@@ -479,12 +483,14 @@ def display_admin_panel():
                             conn.commit()
 
                             window.close()
-                            display_voting_panel()
+                            display_voting_panel(election_name.strip())
             
             # Check results
             elif event=='check-results':
                 display_results(available_results)
-
+                get_available_results()
+                if not available_results:
+                    window[event].update(visible=False)
         else:
             break
     window.close()

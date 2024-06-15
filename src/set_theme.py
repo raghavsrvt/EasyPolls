@@ -1,7 +1,6 @@
 import PySimpleGUI as sg
 from PIL import ImageFont
 from src.get_absolute_path import resource_path
-sg.main_global_pysimplegui_settings()
 def set_theme():
     font_inter = ImageFont.truetype(resource_path('src\\assets\\Inter.ttf'),16)
     inter_font_family = font_inter.getname()[0]

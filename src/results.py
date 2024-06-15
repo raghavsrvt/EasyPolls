@@ -66,7 +66,7 @@ def display_results(available_results):
                         candidate_result_leyout.extend([[vote_text],[sg.ProgressBar(j[1],size=(j[1]*0.2,25),bar_color=bar_color,pad=((10,0),(2,0)))]])
                     result_layout.append([sg.Column(candidate_result_leyout,expand_x=True,size=(100,len(curr_post_data)*60+70),background_color='#FFFFFF',pad=(10,10))])
 
-                show_results_window = sg.Window(f'{results_window[result_event].get()} Results',[[sg.Column(result_layout,expand_y=True,expand_x=True,scrollable=True,vertical_scroll_only=True, key='result_container')]],size=(550,500),resizable=True,modal=True,finalize=True)
+                show_results_window = sg.Window(f'{results_window[result_event].get()} Results  •  EasyPolls  •  Made by Raghav Srivastava (GitHub: raghavsrvt)',[[sg.Column(result_layout,expand_y=True,expand_x=True,scrollable=True,vertical_scroll_only=True, key='result_container')]],size=(550,500),resizable=True,modal=True,finalize=True)
                 
                 # Code to fix columns in result_layout not expanding
                 column = show_results_window['result_container'].widget
@@ -81,14 +81,18 @@ def display_results(available_results):
                     event, values = show_results_window.read() 
                     if event==sg.WIN_CLOSED:
                         conn_result.close()
+                        conn_result = None
                         break
                 show_results_window.close()
 
             # If deleting a result
             elif result_event.startswith('delete'):
                 file_name = result_event.split('-',1)[1]
+                # try:
                 file_path = resource_path(f'src\\results\\result-{file_name}')
                 remove(file_path)
+                # except:
+                    # print('Error in deleting the result')
                 results_window[result_event].update(visible=False)
                 results_window[f'link-{file_name}'].update(visible=False)
                 del results_window.key_dict[result_event]
@@ -99,7 +103,9 @@ def display_results(available_results):
                         other_links_exist = True
                         break
                 if other_links_exist == False:
+                    results_layout = []
                     break
         else:
+            results_layout = []
             break
     results_window.close()

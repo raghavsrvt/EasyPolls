@@ -20,9 +20,7 @@ candidate_image_size = (400, 400)
 post_names = []
 posts_layout = []
 
-user_quit = False
 passwd_correct, election_status = None, None
-end_elections = False
 
 unchecked_box = resource_path('src\\assets\\btn\\unchecked_box.png')
 checked_box = resource_path('src\\assets\\btn\\checked_box.png')
@@ -109,16 +107,21 @@ def passwd_check_end_elections():
     except:
         print('User closed the password popup.')
 
-def display_voting_panel():
-    global user_quit,passwd_correct, election_status, end_elections
+def display_voting_panel(election_name):
+    global post_names,posts_layout, passwd_correct,election_status
+    passwd_correct, election_status = None, None
+    user_quit = False
+    end_elections = False
+    post_names,posts_layout = [],[]
+    user_election_name = election_name
     shown_admin_panel = False
-    header_layout = [sg.Frame('',[[sg.Text('EasyPolls',text_color='#4E46B4',font=(None,18,'bold')),sg.Push(),sg.Image(end_election_btn,key='end-elections-btn',enable_events=True)]],expand_x=True)] 
+    header_layout = [sg.Frame('',[[sg.Text(f'{election_name} Election │ EasyPolls',text_color='#4E46B4',font=(None,18,'bold')),sg.Push(),sg.Image(end_election_btn,key='end-elections-btn',enable_events=True)]],expand_x=True)] 
     layout = [header_layout]
     load_election_data()
 
     layout.append(posts_layout)
 
-    window = sg.Window('EasyPolls', layout, size=(screen_width - 80, screen_height - 120), resizable=True,element_justification='c')
+    window = sg.Window(f'{election_name} Election  •  EasyPolls  •  Made by Raghav Srivastava (GitHub: raghavsrvt)', layout, size=(screen_width - 80, screen_height - 120), resizable=True,element_justification='c')
     
     # Function to make custom radio button work
     def check_radio(key,post_name,max_id):
@@ -176,7 +179,7 @@ def display_voting_panel():
                         for j in post_data:
                             cursor_result.execute(f'INSERT INTO {post_name} (name,votes) VALUES (?,?)',(j[0],j[1])) # Inserting value in the result database
                             conn_result.commit()
-                    
+                    conn_result.close()
                     for i in post_names:
                         post_name = i[0]
                         cursor.execute(f'DROP TABLE {post_name}')
@@ -196,7 +199,7 @@ def display_voting_panel():
     if not end_elections and not user_quit:   
         passwd_correct, election_status = display_password_window()
         if passwd_correct:
-            display_voting_panel()
+            display_voting_panel(user_election_name)
     # Show admin panel after ending the elections
     if end_elections and not shown_admin_panel:
         from src.admin_functions import display_admin_panel

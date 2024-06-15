@@ -62,7 +62,7 @@ def display_password_window():
         [sg.pin(sg.Text(key='passwd-error', text_color='#D33030',font=(None,12,'bold'),visible=False),shrink=True)],
         [sg.Image(continue_btn, key='passwd-submit',enable_events=True,pad=((6,6)))]
     ]
-    window = sg.Window('Admin Password', layout)
+    window = sg.Window('Admin Password  •  EasyPolls', layout)
 
     while True:
         event, values = window.read() 
