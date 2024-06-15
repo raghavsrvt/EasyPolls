@@ -349,7 +349,7 @@ def create_post_modal(post_name, no_of_candidates,window):
     
     
     # Create and display the modal window
-    post_modal = sg.Window(f'Add post information for {post_name} post  •  EasyPolls  •  Made by Raghav Srivastava (GitHub: raghavsrvt)', post_modal_layout, size=(screen_width - 80, screen_height - 120), resizable=True,modal=True)
+    post_modal = sg.Window(f'Add post information for {post_name}  •  EasyPolls  •  Made by Raghav Srivastava (GitHub: raghavsrvt)', post_modal_layout, size=(screen_width - 80, screen_height - 120), resizable=True,modal=True)
     
     while True:
         event, values = post_modal.read() 
