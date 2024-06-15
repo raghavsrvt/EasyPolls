@@ -42,9 +42,9 @@ def display_results(available_results):
                 if ('sqlite_sequence',) in posts_for_result:
                     posts_for_result.remove(('sqlite_sequence',))
                 for i in posts_for_result:
-                    cursor_result.execute(f'SELECT name,votes FROM {i[0]}')
+                    cursor_result.execute(f'SELECT name,votes FROM "{i[0]}"')
                     curr_post_data = cursor_result.fetchall()
-                    cursor_result.execute(f'SELECT MAX(votes) FROM {i[0]}')
+                    cursor_result.execute(f'SELECT MAX(votes) FROM "{i[0]}"')
                     max_votes = cursor_result.fetchone()[0]
                     candidate_result_leyout = [[sg.Text(f'Post: {i[0]}',font=(None,18,'bold'),pad=(10,10),background_color='#FFFFFF')]] # Layout that will contain the results of candidates
                     for j in curr_post_data:

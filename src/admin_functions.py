@@ -30,8 +30,6 @@ red = '#D33030'
 conn = sqlite3.connect(resource_path('src\\election.db')) # Connect to the SQLite database
 cursor = conn.cursor()
 
-sqlite_reserved_words = ["ABORT", "ACTION", "ADD", "AFTER", "ALL", "ALTER", "ANALYZE", "AND", "AS", "ASC", "ATTACH", "AUTOINCREMENT", "BEFORE", "BEGIN", "BETWEEN", "BY", "CASCADE", "CASE", "CAST", "CHECK", "COLLATE", "COLUMN", "COMMIT", "CONFLICT", "CONSTRAINT", "CREATE", "CROSS", "CURRENT_DATE", "CURRENT_TIME", "CURRENT_TIMESTAMP", "DATABASE", "DEFAULT", "DEFERRABLE", "DEFERRED", "DELETE", "DESC", "DETACH", "DISTINCT", "DROP", "EACH", "ELSE", "END", "ESCAPE", "EXCEPT", "EXCLUSIVE", "EXISTS", "EXPLAIN", "FAIL", "FOR", "FOREIGN", "FROM", "FULL", "GLOB", "GROUP", "HAVING", "IF", "IGNORE", "IMMEDIATE", "IN", "INDEX", "INDEXED", "INITIALLY", "INNER", "INSERT", "INSTEAD", "INTERSECT", "INTO", "IS", "ISNULL", "JOIN", "KEY", "LEFT", "LIKE", "LIMIT", "MATCH", "NATURAL", "NO", "NOT", "NOTNULL", "NULL", "OF", "OFFSET", "ON", "OR", "ORDER", "OUTER", "PLAN", "PRAGMA", "PRIMARY", "QUERY", "RAISE", "RECURSIVE", "REFERENCES", "REGEXP", "REINDEX", "RELEASE", "RENAME", "REPLACE", "RESTRICT", "RIGHT", "ROLLBACK", "ROW", "SAVEPOINT", "SELECT", "SET", "TABLE", "TEMP", "TEMPORARY", "THEN", "TO", "TRANSACTION", "TRIGGER", "UNION", "UNIQUE", "UPDATE", "USING", "VACUUM", "VALUES", "VIEW", "VIRTUAL", "WHEN", "WHERE", "WITH", "WITHOUT"]
-
 screen_width, screen_height = sg.Window.get_screen_size() # Get the screen width and height
 candidate_image_size = (400, 400)
 
@@ -61,7 +59,7 @@ def styleAddedPosts(post_name,load_posts_layout):
     Returns:
         list: The updated layout including the post's details.
     """
-    cursor.execute(f'SELECT name,image FROM {post_name}')
+    cursor.execute(f'SELECT name,image FROM "{post_name}"')
     post_data = cursor.fetchall()
 
     # Layout for each post entry
@@ -129,7 +127,7 @@ def table_exists(table_name):
     Returns:
         bool: True if the table exists, False otherwise.
     """
-    cursor.execute(f"SELECT name FROM sqlite_master WHERE type='table' AND name='{table_name}'")
+    cursor.execute(f'SELECT name FROM sqlite_master WHERE type="tabl" AND name="{table_name}"')
     result = cursor.fetchone()
     return result is not None
 
@@ -194,7 +192,7 @@ def delete_post(post_name,window):
     """
     if sg.popup_yes_no(f'Are you sure you want to delete the post titled {post_name}?') == 'Yes':
 
-        cursor.execute(f'DROP TABLE {post_name};')
+        cursor.execute(f'DROP TABLE "{post_name}";')
         conn.commit()
         rmtree(resource_path(f'src\\assets\\post_img\\{post_name}'))
         window[f'{post_name}_container'].update(visible=False)
@@ -231,7 +229,7 @@ WHERE id = ? AND (name != ? OR image != ?);
 
     for candidate in candidates_info:
 
-        cursor.execute(f'SELECT image FROM {post_name} WHERE id={curr_id}')
+        cursor.execute(f'SELECT image FROM "{post_name}" WHERE id={curr_id}')
         prev_image_path = cursor.fetchone()
         
         base_image_name = os.path.basename(candidate[1])
@@ -248,7 +246,7 @@ WHERE id = ? AND (name != ? OR image != ?);
     
     conn.commit()
     window[f'cancel-{post_name}'].update(visible=False)
-    cursor.execute(f'SELECT image FROM {post_name}')
+    cursor.execute(f'SELECT image FROM "{post_name}"')
     all_img_name = [os.path.basename(i[0]) for i in cursor.fetchall()]
 
     for i in os.listdir(post_img_path):
@@ -270,7 +268,7 @@ def edit_post(post_name,window):
     """
     window[f'edit-{post_name}'].metadata = 'Save'
     window[f'edit-{post_name}'].update(save_btn)
-    cursor.execute(f"SELECT MAX(id) FROM {post_name};")
+    cursor.execute(f'SELECT MAX(id) FROM "{post_name}";')
     max_id = cursor.fetchone()[0]
 
     window[f'cancel-{post_name}'].update(visible=True)
@@ -291,7 +289,7 @@ def create_table(post_name, candidate_info,window):
     """
     # Create the table if it does not exist
     cursor.execute(f'''
-    CREATE TABLE IF NOT EXISTS {post_name}(
+    CREATE TABLE IF NOT EXISTS "{post_name}"(
         id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
         name TEXT UNIQUE,
         votes INT DEFAULT 0,
@@ -311,7 +309,7 @@ def create_table(post_name, candidate_info,window):
         im = Image.open(candidate[1])
         im.thumbnail(candidate_image_size)
         im.save(image_path, format = "png")
-        cursor.execute(f'INSERT INTO {post_name} (name, image) VALUES (?,?)', (candidate[0], image_path))
+        cursor.execute(f'INSERT INTO "{post_name}" (name, image) VALUES (?,?)', (candidate[0], image_path))
     
     # Commit the changes to the database
     conn.commit()
@@ -380,13 +378,6 @@ def display_admin_panel():
         if event != sg.WIN_CLOSED:
             if event == 'add-post-btn':
                 post_name = values['post-name']
-                separated_words = post_name.upper().split()
-                includes_reserved_words = False
-
-                for i in separated_words:
-                    if i in sqlite_reserved_words:
-                        includes_reserved_words = True
-                        break
                 
                 # Validate the post name
                 if post_name == '' or post_name.isspace():
@@ -395,8 +386,8 @@ def display_admin_panel():
                     error_popup('Post name must start with a letter.')  
                 elif '-' in post_name:
                     error_popup("Post name must not contain '-'.")  
-                elif includes_reserved_words:
-                    error_popup(f"Sorry, you can't use {post_name} as it contains reserved words.") 
+                # elif includes_reserved_words:
+                #     error_popup(f"Sorry, you can't use {post_name} as it contains reserved words.") 
                 elif table_exists(post_name):
                     error_popup('Post with this name already exists.')  
                 else:
@@ -415,14 +406,14 @@ def display_admin_panel():
             # Save edited post
             elif event.startswith('edit-') and window[event].metadata == 'Save': 
                 post_being_edited = event.partition('-')[2]
-                cursor.execute(f"SELECT MAX(id) FROM {post_being_edited};")
+                cursor.execute(f'SELECT MAX(id) FROM "{post_being_edited}";')
                 max_id = cursor.fetchone()[0]
                 inputValidation(window,max_id,values,post_being_edited,'save post',window)
                 
             #cancel changes
             elif event.startswith('cancel-'):
                 postname = event.split('-')[1]
-                cursor.execute(f'SELECT name,image FROM {postname}')
+                cursor.execute(f'SELECT name,image FROM "{postname}"')
                 post_data = cursor.fetchall()
                 key_val = 1
                 for i in post_data:
@@ -430,7 +421,7 @@ def display_admin_panel():
                     window[f'{postname}-image-{key_val}'].update(i[1]) 
                     key_val+=1
                 
-                cursor.execute(f'SELECT MAX(id) FROM {postname}')
+                cursor.execute(f'SELECT MAX(id) FROM "{postname}"')
                 max_id = cursor.fetchone()[0]
                 for i in range(1,max_id+1):
                     window[f'{postname}-name-{i}'].update(disabled=True) 

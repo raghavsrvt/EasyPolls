@@ -35,7 +35,7 @@ def display_candidates(post_name):
     Returns:
     - list: A list containing PySimpleGUI layout elements to display candidates.
     """
-    cursor.execute(f'SELECT name,image FROM {post_name}')
+    cursor.execute(f'SELECT name,image FROM "{post_name}"')
     post_data = cursor.fetchall()
     max_id = len(post_data)
     if((post_name,max_id) not in post_names):
@@ -151,7 +151,7 @@ def display_voting_panel(election_name):
                     max_id = i[1]
                     for j in range(1,max_id+1):
                         if(window[f'{post_name}-{j}-checkbox'].metadata[0] == True): 
-                            cursor.execute(f'UPDATE {post_name} SET votes = votes + 1 WHERE id={j}')
+                            cursor.execute(f'UPDATE "{post_name}" SET votes = votes + 1 WHERE id={j}')
                             conn.commit()
                             break
                 break
@@ -167,22 +167,22 @@ def display_voting_panel(election_name):
                     cursor_result = conn_result.cursor()
                     for i in post_names:
                         post_name = i[0]
-                        cursor.execute(f'SELECT name,votes FROM {post_name}')
+                        cursor.execute(f'SELECT name,votes FROM "{post_name}"')
                         post_data = cursor.fetchall()
 
-                        cursor_result.execute(f'''CREATE TABLE IF NOT EXISTS {post_name} (
+                        cursor_result.execute(f'''CREATE TABLE IF NOT EXISTS "{post_name}" (
                                             id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
                                             name TEXT,
                                             votes INT
                                             );''')
                         
                         for j in post_data:
-                            cursor_result.execute(f'INSERT INTO {post_name} (name,votes) VALUES (?,?)',(j[0],j[1])) # Inserting value in the result database
+                            cursor_result.execute(f'INSERT INTO "{post_name}" (name,votes) VALUES (?,?)',(j[0],j[1])) # Inserting value in the result database
                             conn_result.commit()
                     conn_result.close()
                     for i in post_names:
                         post_name = i[0]
-                        cursor.execute(f'DROP TABLE {post_name}')
+                        cursor.execute(f'DROP TABLE "{post_name}"')
                         rmtree(resource_path(f'src\\assets\\post_img\\{post_name}'))
                         conn.commit()
                     
