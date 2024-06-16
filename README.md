@@ -21,7 +21,7 @@ EasyPolls is an electronic election software that allows you to create new polls
 
  ### Built With
 - [Python](https://www.python.org/)
-- [PySimpleGUI-4-foss](https://reactjs.org](https://github.com/andor-pierdelacabeza/PySimpleGUI-4-foss))
+- [PySimpleGUI-4-foss](https://github.com/andor-pierdelacabeza/PySimpleGUI-4-foss)
 - [SQLite](https://sqlite.org/)
 
 ## Project Showcase
