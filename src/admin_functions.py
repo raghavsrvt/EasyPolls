@@ -127,7 +127,7 @@ def table_exists(table_name):
     Returns:
         bool: True if the table exists, False otherwise.
     """
-    cursor.execute(f'SELECT name FROM sqlite_master WHERE type="tabl" AND name="{table_name}"')
+    cursor.execute(f'SELECT name FROM sqlite_master WHERE type="table" AND name="{table_name}"')
     result = cursor.fetchone()
     return result is not None
 
@@ -377,7 +377,7 @@ def display_admin_panel():
 
         if event != sg.WIN_CLOSED:
             if event == 'add-post-btn':
-                post_name = values['post-name']
+                post_name = values['post-name'].strip()
                 
                 # Validate the post name
                 if post_name == '' or post_name.isspace():
@@ -392,7 +392,7 @@ def display_admin_panel():
                     error_popup('Post with this name already exists.')  
                 else:
                     try:
-                        no_of_candidates = int(values['no-of-candidates'])
+                        no_of_candidates = int(values['no-of-candidates'].strip())
                         if no_of_candidates < 2:
                             raise ValueError("No. of candidates < 2")
                         create_post_modal(post_name, no_of_candidates,window)
