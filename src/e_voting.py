@@ -48,11 +48,7 @@ def display_candidates(post_name):
 
     for i in post_data:
 
-        if (post_data.index(i)==0):
-            checkbox_element = sg.Image(checked_box,enable_events=True,key=f'{post_name}-{key_val}-checkbox',metadata=[True,max_id],background_color='#FFFFFF',pad=((0,0),(5,6)))
-        else:
-            checkbox_element = sg.Image(unchecked_box,enable_events=True,key=f'{post_name}-{key_val}-checkbox',metadata=[False,max_id],background_color='#FFFFFF',pad=((0,0),(5,6)))
-
+        checkbox_element = sg.Image(unchecked_box,enable_events=True,key=f'{post_name}-{key_val}-checkbox',metadata=[False,max_id],background_color='#FFFFFF',pad=((0,0),(5,6)))
         candidate_image = [sg.Image(i[1],size=candidate_image_size,background_color='#FFFFFF')]
         checkbox_text = sg.Text(i[0],key=f'{post_name}-{key_val}-checkboxtext',enable_events=True,font=(None,14),background_color='#FFFFFF',pad=((2,0),(5,7)))
 
@@ -146,15 +142,31 @@ def display_voting_panel(election_name):
             
             # Submit the votes on click of submit button and then ask for password after breaking while loop
             elif event == 'submit-votes':
+                flag = True
                 for i in post_names:
                     post_name = i[0]
                     max_id = i[1]
+                    flag = True # Value is true so that for checking every post it resets the flag to true
                     for j in range(1,max_id+1):
-                        if(window[f'{post_name}-{j}-checkbox'].metadata[0] == True): 
-                            cursor.execute(f'UPDATE "{post_name}" SET votes = votes + 1 WHERE id={j}')
-                            conn.commit()
+                        if(window[f'{post_name}-{j}-checkbox'].metadata[0] == True):
+                            flag = False
                             break
-                break
+                    if flag==True:
+                        error_popup = sg.popup_ok(f'Please cast your vote for the position of {i[0]}',text_color='#D33030',modal=True,font=(None,12,'bold'))
+                        break
+                
+                # If casted votes for all positions submit the votes.
+                if flag==False:
+                    for i in post_names:
+                        post_name = i[0]
+                        max_id = i[1]
+                        for j in range(1,max_id+1):
+                            if(window[f'{post_name}-{j}-checkbox'].metadata[0] == True):
+                                cursor.execute(f'UPDATE "{post_name}" SET votes = votes + 1 WHERE id={j}')
+                                conn.commit()
+                                break
+                    break
+
             elif event == 'end-elections-btn':
                 passwd_check_end_elections() # Ask password before edning the election
                 if passwd_correct:
