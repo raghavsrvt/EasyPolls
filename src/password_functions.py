@@ -62,15 +62,18 @@ def display_password_window():
         [sg.pin(sg.Text(key='passwd-error', text_color='#D33030',font=(None,12,'bold'),visible=False),shrink=True)],
         [sg.Image(continue_btn, key='passwd-submit',enable_events=True,pad=((6,6)))]
     ]
-    window = sg.Window('Admin Password  •  EasyPolls', layout)
+    window = sg.Window('Admin Password  •  EasyPolls', layout, finalize=True, modal=True)
 
+    window['passwd-1'].bind("<Return>", "_Enter")
+    if window['passwd-2']:
+        window['passwd-2'].bind("<Return>", "_Enter")
     while True:
         event, values = window.read() 
         passwd_error = window['passwd-error']
         
         if event != sg.WIN_CLOSED:
 
-            if event == 'passwd-submit':
+            if event == 'passwd-submit' or event=='passwd-1'+'_Enter' or event=='passwd-2'+'_Enter':
                 if passwd:
                     # If password file exists, verify the entered password
                     if values['passwd-1'] != '':

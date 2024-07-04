@@ -16,6 +16,7 @@ view_img_btn = resource_path('src\\assets\\btn\\view_img_btn.png')
 delete_btn = resource_path('src\\assets\\btn\\delete_btn.png')
 cancel_btn = resource_path('src\\assets\\btn\\cancel_btn.png')
 edit_btn = resource_path('src\\assets\\btn\\edit_btn.png')
+ok_btn = resource_path('src\\assets\\btn\\ok_btn.png')
 save_btn = resource_path('src\\assets\\btn\\save_btn.png')
 add_post_btn = resource_path('src\\assets\\btn\\add_post_btn.png')
 start_election_btn = resource_path('src\\assets\\btn\\start_election_btn.png')
@@ -115,7 +116,13 @@ def loadPosts(main_layout):
     return main_layout
 
 def error_popup(error_message):
-    error_popup = sg.popup_ok(error_message,text_color=red,modal=True,font=(None,12,'bold'))
+    error_popup = sg.Window(error_message,[[sg.Text(error_message,text_color=red,font=(None,12,'bold'))],[sg.Image(ok_btn,key='ok-btn',enable_events=True)]],modal=True,finalize=True)
+    error_popup.bind('<Return>','_Enter')
+    while True:
+        event, values = error_popup.read()
+        if event =='_Enter' or event =='ok-btn':
+            break
+    error_popup.close()
 
 def table_exists(table_name):
     """
@@ -370,13 +377,15 @@ def display_admin_panel():
             [sg.Image(add_post_btn, key='add-post-btn',pad=(9,10),enable_events=True)],
             ]
     layout = loadPosts(layout)
-    window = sg.Window('Admin  •  EasyPolls  •  Made by Raghav Srivastava (GitHub: raghavsrvt)', layout, size=(screen_width - 80, screen_height - 120), resizable=True)
+    window = sg.Window('Admin  •  EasyPolls  •  Made by Raghav Srivastava (GitHub: raghavsrvt)', layout, size=(screen_width - 80, screen_height - 120), resizable=True,finalize=True)
+    window['post-name'].bind("<Return>", "_Enter")
+    window['no-of-candidates'].bind("<Return>", "_Enter")
     
     while True:
         event, values = window.read() 
 
         if event != sg.WIN_CLOSED:
-            if event == 'add-post-btn':
+            if event == 'add-post-btn' or event=='post-name_Enter' or event=='no-of-candidates_Enter':
                 post_name = values['post-name'].strip()
                 
                 # Validate the post name
@@ -385,9 +394,7 @@ def display_admin_panel():
                 elif match(r'^[^a-zA-Z]', post_name):
                     error_popup('Post name must start with a letter.')  
                 elif '-' in post_name:
-                    error_popup("Post name must not contain '-'.")  
-                # elif includes_reserved_words:
-                #     error_popup(f"Sorry, you can't use {post_name} as it contains reserved words.") 
+                    error_popup("Post name must not contain '-'.")
                 elif table_exists(post_name):
                     error_popup('Post with this name already exists.')  
                 else:
@@ -395,6 +402,8 @@ def display_admin_panel():
                         no_of_candidates = int(values['no-of-candidates'].strip())
                         if no_of_candidates < 2:
                             raise ValueError("No. of candidates < 2")
+                        window['post-name'].update('')
+                        window['no-of-candidates'].update('')
                         create_post_modal(post_name, no_of_candidates,window)
                     except ValueError:
                         error_popup('No. of candidates should be at least 2.')  
@@ -460,12 +469,17 @@ def display_admin_panel():
             
             # Start Elections:
             elif event=='start-elections-btn':
+
                 election_name = sg.popup_get_text('Name the Election',modal=True)
                 if election_name:
-                    if f'{election_name.strip()}.db' in available_results:
+                    election_name = election_name.strip()
+                    if f'{election_name}.db' in available_results:
                         error_popup('A result with this election name already exists. Please try again with a different name.')
 
-                    if f'{election_name.strip()}.db' not in available_results:
+                    elif election_name.isalnum()==False:
+                        error_popup('Election name can only contain alphabets and digits.')
+
+                    elif f'{election_name}.db' not in available_results:
                         passwd_correct = display_password_window()[0]
                         if passwd_correct:
                             available_results = []

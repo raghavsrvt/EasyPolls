@@ -117,7 +117,7 @@ def display_voting_panel(election_name):
 
     layout.append(posts_layout)
 
-    window = sg.Window(f'{election_name} Election  •  EasyPolls  •  Made by Raghav Srivastava (GitHub: raghavsrvt)', layout, size=(screen_width - 80, screen_height - 120), resizable=True,element_justification='c')
+    window = sg.Window(f'{election_name} Election  •  EasyPolls  •  Made by Raghav Srivastava (GitHub: raghavsrvt)', layout, size=(screen_width - 80, screen_height - 120), resizable=True,element_justification='c', enable_close_attempted_event=True)
     
     # Function to make custom radio button work
     def check_radio(key,post_name,max_id):
@@ -142,7 +142,7 @@ def display_voting_panel(election_name):
             
             # Submit the votes on click of submit button and then ask for password after breaking while loop
             elif event == 'submit-votes':
-                flag = True
+                flag = True # To check that a vote is casted for each post.
                 for i in post_names:
                     post_name = i[0]
                     max_id = i[1]
@@ -152,7 +152,7 @@ def display_voting_panel(election_name):
                             flag = False
                             break
                     if flag==True:
-                        error_popup = sg.popup_ok(f'Please cast your vote for the position of {i[0]}',text_color='#D33030',modal=True,font=(None,12,'bold'))
+                        error_popup = sg.popup_ok(f'Please cast your vote for the post of {i[0]}',text_color='#D33030',modal=True,font=(None,12,'bold'))
                         break
                 
                 # If casted votes for all positions submit the votes.
@@ -202,8 +202,10 @@ def display_voting_panel(election_name):
                     cursor.execute('UPDATE user_data SET election_name =""')  
                     conn.commit()
                     break
+            elif (event==sg.WINDOW_CLOSE_ATTEMPTED_EVENT or event=='Exit') and display_password_window()[0]:
+                user_quit = True
+                break
         else:
-            user_quit = True
             break
     window.close()
     
