@@ -2,9 +2,11 @@ import sqlite3, PySimpleGUI as sg
 from src.set_theme import set_theme
 from src.get_absolute_path import resource_path
 from os import remove
+from pandas import ExcelWriter, read_sql_query
 set_theme()
 screen_width, screen_height = sg.Window.get_screen_size()
 delete_btn = resource_path('src\\assets\\btn\\delete_secondary_btn.png')
+download_btn = resource_path('src\\assets\\btn\\download_btn.png')
 
 # To fix column expand problem
 def configure_canvas(event, canvas, frame_id):
@@ -23,7 +25,7 @@ def display_results(available_results):
     results_layout = [[sg.Text('Results available: ',font=(None,18,'bold'),pad=(10,10))]]
     temp_layout = [] # layout for column
     for i in available_results:
-        temp_layout.extend([[sg.pin(sg.Text(i.split('.')[0],pad=(10,5),key=f'link-{i}',font=(None,14,'underline'),enable_events=True,text_color='#4E46B4'),shrink=True),sg.Push(),sg.pin(sg.Image(delete_btn,enable_events=True,key=f'delete-{i}',pad=(10,5)),shrink=True)]]) 
+        temp_layout.extend([[sg.pin(sg.Text(i.split('.')[0],pad=(10,5),key=f'link-{i}',font=(None,14,'underline'),enable_events=True,text_color='#4E46B4'),shrink=True),sg.Push(),sg.pin(sg.Image(download_btn,enable_events=True,key=f'download-{i}',pad=((10,0),(5,5))),shrink=True),sg.pin(sg.Image(delete_btn,enable_events=True,key=f'delete-{i}',pad=(10,5)),shrink=True)]]) 
     results_layout.append([sg.Column(temp_layout, scrollable=True, vertical_scroll_only=True,expand_x=True,expand_y=True)]) 
     results_window = sg.Window('Review Election Results', results_layout,size=(500,300),resizable=True)
 
@@ -95,8 +97,10 @@ def display_results(available_results):
                     # print('Error in deleting the result')
                 results_window[result_event].update(visible=False)
                 results_window[f'link-{file_name}'].update(visible=False)
+                results_window[f'download-{file_name}'].update(visible=False)
                 del results_window.key_dict[result_event]
                 del results_window.key_dict[f'link-{file_name}']
+                del results_window.key_dict[f'download-{file_name}']
                 other_links_exist = False
                 for i in results_window.key_dict:
                     if i.startswith('link'):
@@ -105,6 +109,28 @@ def display_results(available_results):
                 if other_links_exist == False:
                     results_layout = []
                     break
+            # Downloading a result
+            elif result_event.startswith('download'):
+                output_file_path = sg.PopupGetFolder('Select the destination folder for saving the result file.',modal=True)
+                if output_file_path:
+                    file_name = result_event.split('-',1)[1]
+                    file_path = resource_path(f'src\\results\\result-{file_name}')
+                    download_conn = sqlite3.connect(file_path)
+                    download_curr = download_conn.cursor()
+                    download_curr.execute('SELECT name FROM sqlite_master WHERE type="table"')
+                    tables = download_curr.fetchall()
+                    tables.remove(('sqlite_sequence',))
+                    try:
+                        output_file_name = file_name.split('.',1)[0]
+                        with ExcelWriter(f'{output_file_path}\\result-{output_file_name}.xlsx') as writer:
+                            for i in tables:
+                                download_query = f'SELECT name, votes FROM "{i[0]}"'
+                                df = read_sql_query(download_query,download_conn)
+                                df.to_excel(writer, sheet_name=i[0], index=False)
+                    except OSError:
+                        from src.admin_functions import error_popup
+                        error_popup('Cannot save file into a non-existent directory.')
+                    download_conn.close()
         else:
             results_layout = []
             break
