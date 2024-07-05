@@ -115,8 +115,8 @@ def loadPosts(main_layout):
     main_layout.append([sg.Column(load_posts_layout,key='posts-container',scrollable=True,vertical_scroll_only=True,expand_y=True,expand_x=True)])
     return main_layout
 
-def error_popup(error_message):
-    error_popup = sg.Window(error_message,[[sg.Text(error_message,text_color=red,font=(None,12,'bold'))],[sg.Image(ok_btn,key='ok-btn',enable_events=True)]],modal=True,finalize=True)
+def error_popup(error_message,color=red):
+    error_popup = sg.Window(error_message,[[sg.Text(error_message,text_color=color,font=(None,12,'bold'))],[sg.Image(ok_btn,key='ok-btn',enable_events=True)]],modal=True,finalize=True)
     error_popup.bind('<Return>','_Enter')
     while True:
         event, values = error_popup.read()

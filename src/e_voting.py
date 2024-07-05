@@ -7,6 +7,8 @@ from src.get_absolute_path import resource_path
 set_theme()
 submit_btn = resource_path('src\\assets\\btn\\submit_btn.png')
 end_election_btn = resource_path('src\\assets\\btn\\end_election_btn.png')
+prev_btn = resource_path('src\\assets\\btn\\prev_btn.png')
+next_btn = resource_path('src\\assets\\btn\\next_btn.png')
 grey = '#E2E2E2'
 dark_grey = '#F5F5F5'
 
@@ -25,7 +27,7 @@ passwd_correct, election_status = None, None
 unchecked_box = resource_path('src\\assets\\btn\\unchecked_box.png')
 checked_box = resource_path('src\\assets\\btn\\checked_box.png')
 
-def display_candidates(post_name):
+def display_candidates(post_name, other_post_exists):
     """
     Display candidates from the specified post table.
 
@@ -65,8 +67,23 @@ def display_candidates(post_name):
             col_val = 1
         key_val+=1
     temp_layout.insert(0, [sg.Text(post_name,font=(None,18,'bold'),pad=((24,0),(20,0)),background_color='#FFFFFF',text_color='black')])
+    if other_post_exists[0]==False and other_post_exists[1]==False:
+        btn_to_add = [sg.Image(submit_btn,enable_events=True, key='submit-votes',pad=(9,10))]
+    elif other_post_exists[1]==False:
+        btn_to_add = [sg.Image(prev_btn,enable_events=True, key=f'{other_post_exists[0]}',pad=(9,10),metadata=post_name),sg.Image(submit_btn,enable_events=True, key='submit-votes',pad=(9,10))]
+    elif other_post_exists[0]==False:
+        btn_to_add = [sg.Image(next_btn,enable_events=True, key=f'{other_post_exists[1]}',pad=(9,10),metadata=post_name)]
+    else:
+        btn_to_add = [sg.Image(prev_btn,enable_events=True, key=f'{other_post_exists[0]}',pad=(9,10),metadata=post_name),sg.Image(next_btn,enable_events=True, key=f'{other_post_exists[1]}',pad=(9,10),metadata=post_name)]
+    
     temp_layout.append([sg.Text('',size=(0,1),font=(None,7),background_color='#FFFFFF')])
-    return [sg.Column(temp_layout,pad=((15,7.5)),background_color='#FFFFFF')]
+    if other_post_exists[0]==False:
+        return [sg.pin(sg.Column([[sg.Column(temp_layout,pad=((15,7.5)),background_color='#FFFFFF')],btn_to_add],key=f'post-container-{post_name}'),shrink=True)]
+    elif other_post_exists[0]==False and other_post_exists[1]==False:
+        print('Reached here')
+        return [sg.pin(sg.Column([[sg.Column(temp_layout,pad=((15,7.5)),background_color='#FFFFFF')],btn_to_add],key=f'post-container-{post_name}'),shrink=True)]
+    else:
+        return [sg.pin(sg.Column([[sg.Column(temp_layout,pad=((15,7.5)),background_color='#FFFFFF')],btn_to_add],key=f'post-container-{post_name}',visible=False),shrink=True)]
             
 # Load available election data
 def load_election_data():
@@ -86,12 +103,19 @@ def load_election_data():
     if('user_data',) in tables:
         tables.remove(('user_data',))
     post_num=1
-    for i in tables:
-        post_name = i[0]
-        temp_layout.append(display_candidates(post_name))
+    # for i in tables:
+    for i in range(len(tables)):
+        post_name = tables[i][0]
+        if i==0 and len(tables)==1: # When there's only one post in the election
+            temp_layout.append(display_candidates(post_name,other_post_exists=[False,False]))
+        elif i==len(tables)-1:
+            temp_layout.append(display_candidates(post_name,other_post_exists=[f'post-btn-{tables[i-1][0]}',False]))
+        elif i==0:
+            temp_layout.append(display_candidates(post_name,other_post_exists=[False,f'post-btn-{tables[i+1][0]}']))
+        else:
+            temp_layout.append(display_candidates(post_name,other_post_exists=[f'post-btn-{tables[i-1][0]}',f'post-btn-{tables[i+1][0]}']))
         post_num+=1
-    temp_layout.append([sg.Image(submit_btn,enable_events=True, key='submit-votes',pad=(9,10))])
-    posts_layout.append(sg.Column(temp_layout,vertical_scroll_only=True,expand_y=True,scrollable=True,pad=(25,25)))
+    posts_layout.append(sg.Column(temp_layout,vertical_scroll_only=True,expand_y=True,scrollable=True,pad=(25,25),key='parent-container'))
 
 def passwd_check_end_elections():
     '''
@@ -118,6 +142,8 @@ def display_voting_panel(election_name):
     layout.append(posts_layout)
 
     window = sg.Window(f'{election_name} Election  •  EasyPolls  •  Made by Raghav Srivastava (GitHub: raghavsrvt)', layout, size=(screen_width - 80, screen_height - 120), resizable=True,element_justification='c', enable_close_attempted_event=True)
+    window.Finalize()
+    window.Maximize()
     
     # Function to make custom radio button work
     def check_radio(key,post_name,max_id):
@@ -152,7 +178,8 @@ def display_voting_panel(election_name):
                             flag = False
                             break
                     if flag==True:
-                        error_popup = sg.popup_ok(f'Please cast your vote for the post of {i[0]}',text_color='#D33030',modal=True,font=(None,12,'bold'))
+                        from src.admin_functions import error_popup
+                        error_popup(f'Please cast your vote for the post of {i[0]}')
                         break
                 
                 # If casted votes for all positions submit the votes.
@@ -202,6 +229,15 @@ def display_voting_panel(election_name):
                     cursor.execute('UPDATE user_data SET election_name =""')  
                     conn.commit()
                     break
+            
+            elif event.startswith('post-btn'):
+                post_to_view = event.split('-',2)[2]
+                curr_post = window[event].metadata
+                window[f'post-container-{curr_post}'].update(visible=False)
+                window[f'post-container-{post_to_view}'].update(visible=True)
+                window.refresh()                                # refresh required here
+                window['parent-container'].contents_changed()  
+
             elif (event==sg.WINDOW_CLOSE_ATTEMPTED_EVENT or event=='Exit') and display_password_window()[0]:
                 user_quit = True
                 break

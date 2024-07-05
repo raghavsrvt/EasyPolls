@@ -24,8 +24,10 @@ def display_results(available_results):
     """
     results_layout = [[sg.Text('Results available: ',font=(None,18,'bold'),pad=(10,10))]]
     temp_layout = [] # layout for column
+
     for i in available_results:
-        temp_layout.extend([[sg.pin(sg.Text(i.split('.')[0],pad=(10,5),key=f'link-{i}',font=(None,14,'underline'),enable_events=True,text_color='#4E46B4'),shrink=True),sg.Push(),sg.pin(sg.Image(download_btn,enable_events=True,key=f'download-{i}',pad=((10,0),(5,5))),shrink=True),sg.pin(sg.Image(delete_btn,enable_events=True,key=f'delete-{i}',pad=(10,5)),shrink=True)]]) 
+        temp_layout.extend([[sg.pin(sg.Text(i.split('.')[0],pad=(10,5),key=f'link-{i}',font=(None,14,'underline'),enable_events=True,text_color='#4E46B4'),shrink=True),sg.Push(),sg.pin(sg.Image(download_btn,enable_events=True,key=f'download-{i}',pad=((10,0),(5,5))),shrink=True),sg.pin(sg.Image(delete_btn,enable_events=True,key=f'delete-{i}',pad=(10,5)),shrink=True)]])
+
     results_layout.append([sg.Column(temp_layout, scrollable=True, vertical_scroll_only=True,expand_x=True,expand_y=True)]) 
     results_window = sg.Window('Review Election Results', results_layout,size=(500,300),resizable=True)
 
@@ -41,8 +43,9 @@ def display_results(available_results):
                 cursor_result = conn_result.cursor()
                 cursor_result.execute('SELECT name FROM sqlite_master WHERE type="table"')
                 posts_for_result = cursor_result.fetchall()
-                if ('sqlite_sequence',) in posts_for_result:
-                    posts_for_result.remove(('sqlite_sequence',))
+                posts_for_result.remove(('sqlite_sequence',))
+                cursor_result.execute(f'SELECT SUM(votes) FROM "{posts_for_result[0][0]}"')
+                tot_votes = cursor_result.fetchone()[0]
                 for i in posts_for_result:
                     cursor_result.execute(f'SELECT name,votes FROM "{i[0]}"')
                     curr_post_data = cursor_result.fetchall()
@@ -68,7 +71,9 @@ def display_results(available_results):
                         candidate_result_leyout.extend([[vote_text],[sg.ProgressBar(j[1],size=(j[1]*0.2,25),bar_color=bar_color,pad=((10,0),(2,0)))]])
                     result_layout.append([sg.Column(candidate_result_leyout,expand_x=True,size=(100,len(curr_post_data)*60+70),background_color='#FFFFFF',pad=(10,10))])
 
-                show_results_window = sg.Window(f'{results_window[result_event].get()} Results  •  EasyPolls  •  Made by Raghav Srivastava (GitHub: raghavsrvt)',[[sg.Column(result_layout,expand_y=True,expand_x=True,scrollable=True,vertical_scroll_only=True, key='result_container')]],size=(550,500),resizable=True,modal=True,finalize=True)
+                show_results_window = sg.Window(f'{results_window[result_event].get()} Results  •  EasyPolls  •  Made by Raghav Srivastava (GitHub: raghavsrvt)',[[sg.Frame('',[[sg.Text(f'{results_window[result_event].get()} Results',text_color='#4E46B4',font=(None,18,'bold'),pad=(15,10)),sg.Push(),sg.Text(f'Total Votes: {tot_votes}',pad=(15,10))]],expand_x=True)],[sg.Text('',size=(0,1),font=(None,5),background_color='#FFFFFF')],[sg.Column(result_layout,expand_y=True,expand_x=True,scrollable=True,vertical_scroll_only=True, key='result_container')]],size=(550,500),resizable=True,modal=True,finalize=True)
+                show_results_window.Finalize()
+                show_results_window.Maximize()
                 
                 # Code to fix columns in result_layout not expanding
                 column = show_results_window['result_container'].widget
@@ -111,10 +116,11 @@ def display_results(available_results):
                     break
             # Downloading a result
             elif result_event.startswith('download'):
+                # Get the folder where the result excel file will be saved.
                 output_file_path = sg.PopupGetFolder('Select the destination folder for saving the result file.',modal=True)
                 if output_file_path:
-                    file_name = result_event.split('-',1)[1]
-                    file_path = resource_path(f'src\\results\\result-{file_name}')
+                    file_name = result_event.split('-',1)[1] # Get file name
+                    file_path = resource_path(f'src\\results\\result-{file_name}') # Make path
                     download_conn = sqlite3.connect(file_path)
                     download_curr = download_conn.cursor()
                     download_curr.execute('SELECT name FROM sqlite_master WHERE type="table"')
@@ -125,9 +131,11 @@ def display_results(available_results):
                         with ExcelWriter(f'{output_file_path}\\result-{output_file_name}.xlsx') as writer:
                             for i in tables:
                                 download_query = f'SELECT name, votes FROM "{i[0]}"'
-                                df = read_sql_query(download_query,download_conn)
-                                df.to_excel(writer, sheet_name=i[0], index=False)
-                    except OSError:
+                                df = read_sql_query(download_query,download_conn) # Get dataframe
+                                df.to_excel(writer, sheet_name=i[0], index=False) # Write new data on the file
+                        from src.admin_functions import error_popup
+                        error_popup('Saved the result successfully!','#2E7D32')
+                    except OSError: # If the selected path doesn't exsist
                         from src.admin_functions import error_popup
                         error_popup('Cannot save file into a non-existent directory.')
                     download_conn.close()
