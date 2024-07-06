@@ -51,7 +51,7 @@ def display_candidates(post_name, other_post_exists):
     for i in post_data:
 
         checkbox_element = sg.Image(unchecked_box,enable_events=True,key=f'{post_name}-{key_val}-checkbox',metadata=[False,max_id],background_color='#FFFFFF',pad=((0,0),(5,6)))
-        candidate_image = [sg.Image(i[1],size=candidate_image_size,background_color='#FFFFFF')]
+        candidate_image = [sg.Image(resource_path(i[1]),size=candidate_image_size,background_color='#FFFFFF')]
         checkbox_text = sg.Text(i[0],key=f'{post_name}-{key_val}-checkboxtext',enable_events=True,font=(None,14),background_color='#FFFFFF',pad=((2,0),(5,7)))
 
         if(col_val==1):

@@ -70,7 +70,7 @@ def styleAddedPosts(post_name,load_posts_layout):
     for i in post_data:
         # Input fields for post name, image and browse button
         post_layout.append([sg.Input(i[0],key=f'{post_name}-name-{key_val}',expand_y=True,disabled=True,size=(30),pad=((12,0),(4, 4))),
-                            sg.Input(i[1],key=f'{post_name}-image-{key_val}',expand_y=True,disabled=True,size=(30),pad=(8,4)),
+                            sg.Input(resource_path(i[1]),key=f'{post_name}-image-{key_val}',expand_y=True,disabled=True,size=(30),pad=(8,4)),
                             sg.Image(view_img_btn,enable_events=True,key=f'{post_name}-view-image-{key_val}',pad=((0,8),(4, 4)),background_color='#FFFFFF'),
                             sg.FileBrowse('   Browse Image   ', key=f'{post_name}-image-button-{key_val}',target=f'{post_name}-image-{key_val}',file_types=(("Image Files", "*.png;*.jpg;*.jpeg;*.webp"),),disabled=True,button_color=f'{dark_grey} on {grey}',pad=((0,12),(4, 4)),expand_y=True,font=(None,11,'bold')),
                             ])
@@ -232,7 +232,7 @@ SET name = ?,image= ?
 WHERE id = ? AND (name != ? OR image != ?);
 """
     curr_id = 1
-    post_img_path = resource_path(f'src\\assets\\post_img\\{post_name}')
+    post_img_path = f'src\\assets\\post_img\\{post_name}'
 
     for candidate in candidates_info:
 
@@ -243,7 +243,7 @@ WHERE id = ? AND (name != ? OR image != ?);
         image_name = f'{os.path.splitext(base_image_name)[0]}.png'
         image_path = f'{post_img_path}\\{image_name}' 
         
-        window[f'{post_name}-image-{curr_id}'].update(f'{image_path}')
+        window[f'{post_name}-image-{curr_id}'].update(f'{resource_path(image_path)}')
         cursor.execute(save_post_query,(candidate[0],image_path,curr_id,candidate[0],image_path))
         if(candidate[1]!=prev_image_path[0]):
             im = Image.open(candidate[1])
@@ -305,7 +305,7 @@ def create_table(post_name, candidate_info,window):
     ''')
     
     # Create a directory to store candidate images
-    post_img_path = resource_path(f'src\\assets\\post_img\\{post_name}')
+    post_img_path = f'src\\assets\\post_img\\{post_name}'
     os.makedirs(post_img_path)
     
     # Copy candidate images to the directory and insert candidate info into the table
