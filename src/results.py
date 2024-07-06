@@ -68,10 +68,10 @@ def display_results(available_results):
                             vote_text = sg.Text(f'{j[0]} ({j[1]} Votes)',background_color='#FFFFFF', pad=((10,5),(10,0)))
                             bar_color = ('#E2E2E2','#E2E2E2')
                         
-                        candidate_result_leyout.extend([[vote_text],[sg.ProgressBar(j[1],size=(j[1]*0.2,25),bar_color=bar_color,pad=((10,0),(2,0)))]])
-                    result_layout.append([sg.Column(candidate_result_leyout,expand_x=True,size=(100,len(curr_post_data)*60+70),background_color='#FFFFFF',pad=(10,10))])
+                        candidate_result_leyout.extend([[vote_text],[sg.ProgressBar(j[1],size=(j[1]*0.2,6),bar_color=bar_color,pad=((10,0),(2,0)))]])
+                    result_layout.append([sg.Column(candidate_result_leyout,expand_x=True,size=(100,len(curr_post_data)*60+30),background_color='#FFFFFF',pad=(10,10))])
 
-                show_results_window = sg.Window(f'{results_window[result_event].get()} Results  •  EasyPolls  •  Made by Raghav Srivastava (GitHub: raghavsrvt)',[[sg.Frame('',[[sg.Text(f'{results_window[result_event].get()} Results',text_color='#4E46B4',font=(None,18,'bold'),pad=(15,10)),sg.Push(),sg.Text(f'Total Votes: {tot_votes}',pad=(15,10))]],expand_x=True)],[sg.Text('',size=(0,1),font=(None,5),background_color='#FFFFFF')],[sg.Column(result_layout,expand_y=True,expand_x=True,scrollable=True,vertical_scroll_only=True, key='result_container')]],size=(550,500),resizable=True,modal=True,finalize=True)
+                show_results_window = sg.Window(f'{results_window[result_event].get()} Results  •  EasyPolls  •  Made by Raghav Srivastava (GitHub: raghavsrvt)',[[sg.Frame('',[[sg.Text(f'{results_window[result_event].get()} Results',text_color='#4E46B4',font=(None,18,'bold'),pad=(15,10)),sg.Push(),sg.Text(f'Total Votes: {tot_votes}',font=(None,16,'normal'),pad=(15,10))]],expand_x=True)],[sg.Text('',size=(0,1),font=(None,5),background_color='#FFFFFF')],[sg.Column(result_layout,expand_y=True,expand_x=True,scrollable=True,vertical_scroll_only=True, key='result_container')]],size=(550,500),resizable=True,modal=True,finalize=True)
                 show_results_window.Finalize()
                 show_results_window.Maximize()
                 
