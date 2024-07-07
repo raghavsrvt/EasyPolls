@@ -476,7 +476,7 @@ def display_admin_panel():
                     if f'{election_name}.db' in available_results:
                         error_popup('A result with this election name already exists. Please try again with a different name.')
 
-                    elif election_name.isalnum()==False:
+                    elif election_name.replace(' ','').isalnum()==False:
                         error_popup('Election name can only contain alphabets and digits.')
 
                     elif f'{election_name}.db' not in available_results:
