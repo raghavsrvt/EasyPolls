@@ -25,7 +25,7 @@ EasyPolls is an electronic election software that allows you to create new polls
 - [SQLite](https://sqlite.org/)
 
 ## Project Showcase
-![Add New Posts](https://github.com/raghavsrvt/EasyPolls/assets/117651088/f6a9e58d-a4f1-42ff-941f-ea850338954a)
+![Add New Posts](https://github.com/raghavsrvt/EasyPolls/assets/117651088/b00159ac-5c9e-4fad-b1d3-2d8a31e047b1)
 
 ![Add Candidates](https://github.com/raghavsrvt/EasyPolls/assets/117651088/ff74cee2-53a4-4c88-8c48-521584d29be5)
 
@@ -33,9 +33,9 @@ EasyPolls is an electronic election software that allows you to create new polls
 
 ![Cast Your Vote](https://github.com/raghavsrvt/EasyPolls/assets/117651088/ea7c6156-3e02-4abb-897f-9d770f66eda8)
 
-![View Available Results](https://github.com/raghavsrvt/EasyPolls/assets/117651088/09555548-b0a4-4443-ba53-b04b744473f2)
+![View Available Results](https://github.com/raghavsrvt/EasyPolls/assets/117651088/abf3607d-d819-4255-ad0b-8c9419dff52f)
 
-![Check Results](https://github.com/raghavsrvt/EasyPolls/assets/117651088/a5246ad0-13fb-4401-9cf4-8e2c40922e64)
+![Check Results](https://github.com/raghavsrvt/EasyPolls/assets/117651088/7b4cd757-6393-4876-aa1a-9212d8b8032b)
 
  ## Getting Started
 You can run the project directly by downloading files from this repository (recommended) or you can download the <a href='https://github.com/raghavsrvt/EasyPolls/blob/main/easypolls_setup.exe'>executable file</a> and install it.
