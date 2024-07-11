@@ -65,6 +65,7 @@ def display_password_window():
     window = sg.Window('Admin Password  •  EasyPolls', layout, finalize=True, modal=True)
 
     window['passwd-1'].bind("<Return>", "_Enter")
+    window['passwd-1'].set_focus()
     if window['passwd-2']:
         window['passwd-2'].bind("<Return>", "_Enter")
     while True:

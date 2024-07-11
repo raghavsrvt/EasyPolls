@@ -42,11 +42,11 @@ def display_candidates(post_name, other_post_exists):
     max_id = len(post_data)
     if((post_name,max_id) not in post_names):
         post_names.append((post_name,max_id))
-    col_val = 1 # A key to know whether both the columns are added or not
+    col_val = 1  # A key to know whether both the columns are added or not
     key_val = 1
     temp_layout = []
-    col_1 = None # column element at left
-    col_2 = None # column element at right
+    col_1 = None  # column element at left
+    col_2 = None  # column element at right
 
     for i in post_data:
 
@@ -103,10 +103,10 @@ def load_election_data():
     if('user_data',) in tables:
         tables.remove(('user_data',))
     post_num=1
-    # for i in tables:
+
     for i in range(len(tables)):
         post_name = tables[i][0]
-        if i==0 and len(tables)==1: # When there's only one post in the election
+        if i==0 and len(tables)==1:  # When there's only one post in the election
             temp_layout.append(display_candidates(post_name,other_post_exists=[False,False]))
         elif i==len(tables)-1:
             temp_layout.append(display_candidates(post_name,other_post_exists=[f'post-btn-{tables[i-1][0]}',False]))
@@ -168,11 +168,11 @@ def display_voting_panel(election_name):
             
             # Submit the votes on click of submit button and then ask for password after breaking while loop
             elif event == 'submit-votes':
-                flag = True # To check that a vote is casted for each post.
+                flag = True  # To check that a vote is casted for each post.
                 for i in post_names:
                     post_name = i[0]
                     max_id = i[1]
-                    flag = True # Value is true so that for checking every post it resets the flag to true
+                    flag = True  # Value is true so that for checking every post it resets the flag to true
                     for j in range(1,max_id+1):
                         if(window[f'{post_name}-{j}-checkbox'].metadata[0] == True):
                             flag = False
@@ -195,7 +195,7 @@ def display_voting_panel(election_name):
                     break
 
             elif event == 'end-elections-btn':
-                passwd_check_end_elections() # Ask password before edning the election
+                passwd_check_end_elections()  # Ask password before edning the election
                 if passwd_correct:
                     end_elections = True
                     passwd_correct,election_status = None,None
@@ -216,7 +216,7 @@ def display_voting_panel(election_name):
                                             );''')
                         
                         for j in post_data:
-                            cursor_result.execute(f'INSERT INTO "{post_name}" (name,votes) VALUES (?,?)',(j[0],j[1])) # Inserting value in the result database
+                            cursor_result.execute(f'INSERT INTO "{post_name}" (name,votes) VALUES (?,?)',(j[0],j[1]))  # Inserting value in the result database
                             conn_result.commit()
                     conn_result.close()
                     for i in post_names:
@@ -235,7 +235,7 @@ def display_voting_panel(election_name):
                 curr_post = window[event].metadata
                 window[f'post-container-{curr_post}'].update(visible=False)
                 window[f'post-container-{post_to_view}'].update(visible=True)
-                window.refresh()                                # refresh required here
+                window.refresh()  # refresh required here to change the scroll bar according to contents
                 window['parent-container'].contents_changed()  
 
             elif (event==sg.WINDOW_CLOSE_ATTEMPTED_EVENT or event=='Exit') and display_password_window()[0]:
