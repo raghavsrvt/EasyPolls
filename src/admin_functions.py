@@ -2,12 +2,12 @@ import PySimpleGUI as sg, sqlite3, os
 from re import match
 from shutil import rmtree
 from PIL import Image
+from io import BytesIO
 from src.password_functions import display_password_window
 from src.e_voting import display_voting_panel
 from src.results import display_results
 from src.set_theme import set_theme
 from src.get_absolute_path import resource_path
-from io import BytesIO
 
 set_theme()
 
@@ -39,7 +39,9 @@ candidate_image_size = (400, 400)
 added_posts_heading = []
 
 available_results = []
-candidates_rm_posts = [] # Posts whose candidates have been removed
+rm_candidates_posts = {} # Posts whose candidates have been removed
+
+
 def get_available_results():
     global available_results
     if os.path.exists(resource_path('src\\results')) == False:
@@ -48,26 +50,28 @@ def get_available_results():
     src_dirs = os.listdir(resource_path('src\\results'))
     available_results = [i.split('-',1)[1] for i in src_dirs if i.startswith('result-')]  # Add the name of available election result
 
-def display_candidate_info(candidate_info,post_name,key_val):
+
+def display_candidate_info(candidate_details,post_name,key_val):
     """
     Args:
-        candidate_info (tuple): Stores the information of individual candidate as (name,image)
+        candidate_details (tuple): Stores the information of individual candidate as (name,image)
     """
-    col_layout = [sg.Input(candidate_info[0],key=f'{post_name}-name-{key_val}',expand_y=True,disabled=True,size=(30),pad=((12,0),(4, 4)),text_color='#595D62'),
-                    sg.Input(resource_path(candidate_info[1]),key=f'{post_name}-image-{key_val}',expand_y=True,disabled=True,size=(30),pad=(8,4),text_color='#595D62'),
+    col_layout = [sg.Input(candidate_details[0],key=f'{post_name}-name-{key_val}',expand_y=True,disabled=True,size=(30),pad=((12,0),(4, 4)),text_color='#595D62'),
+                    sg.Input(resource_path(candidate_details[1]),key=f'{post_name}-image-{key_val}',expand_y=True,disabled=True,size=(30),pad=(8,4),text_color='#595D62'),
                     sg.Image(view_img_btn,enable_events=True,key=f'{post_name}-view-image-{key_val}',pad=((0,8),(4, 4)),background_color='#FFFFFF'),
                     sg.FileBrowse('   Browse Image   ', key=f'{post_name}-image-button-{key_val}',target=f'{post_name}-image-{key_val}',file_types=(("Image Files", "*.png;*.jpg;*.jpeg;*.webp"),),disabled=True,button_color=f'{dark_grey} on {grey}',pad=((0,12),(4, 4)),expand_y=True,font=(None,11,'bold')),
                     sg.Image(del_candidate_btn,enable_events=True,key=f'del-{post_name}-{key_val}',background_color='#FFFFFF',tooltip='Remove the candidate.')
                     ]
     return col_layout
 
-def style_added_posts(post_name,load_posts_layout):
+
+def style_added_posts(post_name,posts_layout):
     """
     Create the layout for displaying a post's details.
 
     Args:
         post_name (str): The name of the post.
-        load_posts_layout (list): The layout to which the post's details will be added.
+        posts_layout (list): The layout to which the post's details will be added.
 
     Returns:
         list: The updated layout including the post's details.
@@ -85,10 +89,11 @@ def style_added_posts(post_name,load_posts_layout):
     key_val = 1
     for i in post_data:
         # Input fields for post name, image and browse button
-        post_layout.append([sg.pin(sg.Column([display_candidate_info(i,post_name,key_val)],background_color='#FFFFFF',key=f'{post_name}-{key_val}'))])
+        post_layout.append([sg.pin(sg.Column([display_candidate_info(i,post_name,key_val)],background_color='#FFFFFF',key=f'{post_name}-{key_val}'),shrink=True)])
         key_val+=1
-    load_posts_layout.append([sg.pin(sg.Column(post_layout,pad=(5,10),key=f'{post_name}_container',background_color='#FFFFFF'))])
-    return load_posts_layout
+    posts_layout.append([sg.pin(sg.Column(post_layout,pad=(5,10),key=f'{post_name}_container',background_color='#FFFFFF'))])
+    return posts_layout
+
 
 # Function to load existing posts from the database
 def load_posts(main_layout):
@@ -120,7 +125,7 @@ def load_posts(main_layout):
             post_name = i[0]
             load_posts_layout = style_added_posts(post_name,load_posts_layout)
 
-    header_layout = [[sg.Text('Admin │ EasyPolls',text_color='#4E46B4',font=(None,18,'bold')),sg.Push(),
+    header_layout = [[sg.Text('Admin │ EasyPolls',text_color='#4E46B4',font=(None,18,'bold'),pad=(12,12)),sg.Push(),
                       sg.Image(available_results_btn,key='check-results',visible=bool(available_results),enable_events=True),
                       sg.Image(start_election_btn,key='start-elections-btn',visible=bool(tables),enable_events=True)]]
 
@@ -128,6 +133,7 @@ def load_posts(main_layout):
     # Adding loaded posts to the main layout
     main_layout.append([sg.Column(load_posts_layout,key='posts-container',scrollable=True,vertical_scroll_only=True,expand_y=True,expand_x=True)])
     return main_layout
+
 
 def error_popup(error_message,color=red):
     error_popup = sg.Window(error_message,[[sg.Text(error_message,text_color=color,font=(None,12,'bold'))],
@@ -138,6 +144,7 @@ def error_popup(error_message,color=red):
         if event =='_Enter' or event =='ok-btn':
             break
     error_popup.close()
+
 
 def table_exists(table_name):
     """
@@ -153,7 +160,8 @@ def table_exists(table_name):
     result = cursor.fetchone()
     return result is not None
 
-def input_validation(element,no_of_candidates,values,post_name,action,window=None):
+
+def check_inputs_filled(element:sg.Window ,no_of_candidates:int, values:dict, post_name:str, action:str, window=None):
     """
     Validate inputs for creating or saving a post.
 
@@ -163,116 +171,134 @@ def input_validation(element,no_of_candidates,values,post_name,action,window=Non
         values (dict): Dictionary containing values from the GUI inputs.
         post_name (str): Name of the post.
         action (str): Action to perform ('create post' or 'save post' or 'add more candidates').
-        window (PySimpleGUI)
     """
     all_inputs_filled = True
-    candidate_info = []
-    
+    candidate_details = []
+    keys_dict = element.AllKeysDict
     # Collect candidate information and validate inputs
     for i in range(1, no_of_candidates + 1):
-        if f'{post_name}-image-{i}' in values:
+        if f'{post_name}-image-{i}' in keys_dict:
             candidate_image = values.get(f'{post_name}-image-{i}', '').strip()
             candidate_name = values.get(f'{post_name}-name-{i}', '').strip()
             
+            # if candidate_name not in rm_candidates_posts[post_name]:
             if not candidate_image or not candidate_name or candidate_image=='Selected image\'s path will appear here.':
                 all_inputs_filled = False
                 error_popup('Please fill all inputs.')
                 break
-            
-            candidate_info.append((candidate_name, candidate_image))
+            candidate_details.append((candidate_name, candidate_image))
 
     if all_inputs_filled == True:
-        # Extracting candidate names and images
-        candidate_names = [i[0] for i in candidate_info]
-        candidate_images = [os.path.basename(i[1]).split('.',1)[0] for i in candidate_info]
+        validate_inputs(post_name, candidate_details, no_of_candidates, action, element, window)
 
-        # Checking for duplicate names and images
-        dup_names_exist = len(candidate_names) != len(set(candidate_names))
-        dup_images_exist = len(candidate_images) != len(set(candidate_images))
+
+def validate_inputs(post_name:str, candidate_details:list, no_of_candidates:int, action:str, element:sg.Window, window):
+    new_names = [i[0] for i in candidate_details]
+    new_img_names = [os.path.basename(i[1]).split('.',1)[0] for i in candidate_details]
+
+    # Checking for duplicate names and images
+    dup_names_exist = len(new_names) != len(set(new_names))
+    dup_images_exist = len(new_img_names) != len(set(new_img_names))
         
-        # Handling different validation scenarios
-        if dup_names_exist:
-            error_popup('Every name entered should be unique.')  
-        elif dup_images_exist:
-            error_popup("Every image's name should be unique.")  
-        elif action =='create post':
-            create_table(post_name, candidate_info,window)
+    # Handling different validation scenarios
+    if dup_names_exist:
+        error_popup('Every name entered should be unique.')  
+    elif dup_images_exist:
+        error_popup("Every image's name should be unique.")  
+    elif action =='create post':
+        create_table(post_name, candidate_details,window)
+        element.close()
+    elif action =='save post':
+        save_edited_post(post_name, no_of_candidates,candidate_details, element)
+    elif action =='add more candidates':
+        img_same_name_exists, same_candidate_exists = validate_new_candidates(post_name, new_img_names,new_names)
+        if img_same_name_exists==False and same_candidate_exists==False:
+            add_more_candidates(post_name, candidate_details, window)
             element.close()
-        elif action =='save post':
-            save_edited_post(post_name, no_of_candidates,candidate_info, element)
-        elif action =='add more candidates':
-            img_same_name_exists = False
-            same_candidate_exists = False
+    else:
+        print('An error occurred.')
 
-            cursor.execute(f'SELECT image FROM "{post_name}"')
-            existing_img_name = [os.path.basename(i[0]).split('.',1)[0] for i in cursor.fetchall()]
 
-            cursor.execute(f'SELECT name FROM "{post_name}"')
-            existing_candidate_name = [i[0] for i in cursor.fetchall()]
+def validate_new_candidates(post_name:str, new_img_names:list, new_names:list) -> tuple:
+    """
 
-            for i in range(len(candidate_images)):
-                if candidate_images[i] in existing_img_name:
-                    img_same_name_exists = True
-                    # Candidate having the same image name.
-                    candidate_same_img = existing_candidate_name[existing_img_name.index(candidate_images[i])]
-                    error_popup(f'The image for {candidate_names[i]} matches an existing candidate {candidate_same_img}. Image names must be unique.')
-                    break
-                if candidate_names[i] in existing_candidate_name:
-                    same_candidate_exists = True
-                    error_popup(f'The candidate with the name {candidate_names[i]} already exists. Candidate names must be unique.')
-                    break
-            if img_same_name_exists==False and same_candidate_exists==False:
-                add_more_candidates(post_name, candidate_info, window)
-                element.close()
-        else:
-            print('An error occurred.')
+    """
+    img_same_name_exists = False
+    same_candidate_exists = False
+    
+    cursor.execute(f'SELECT image FROM "{post_name}"')
+    existing_img_name = [os.path.basename(i[0]).split('.',1)[0] for i in cursor.fetchall()]
+    
+    cursor.execute(f'SELECT name FROM "{post_name}"')
+    existing_candidate_name = [i[0] for i in cursor.fetchall()]
+    
+    for i in range(len(new_img_names)):
+        if new_img_names[i] in existing_img_name:
+            img_same_name_exists = True
+            # Candidate having the same image name.
+            candidate_same_img = existing_candidate_name[existing_img_name.index(new_img_names[i])]
+            error_popup(f'The image for {new_names[i]} matches an existing candidate {candidate_same_img}. Image names must be unique.')
+            break
+        if new_names[i] in existing_candidate_name:
+            same_candidate_exists = True
+            error_popup(f'The candidate with the name {new_names[i]} already exists. Candidate names must be unique.')
+            break
+    return img_same_name_exists,same_candidate_exists
+
 
 # <======================================= EDIT & DELETE POST =======================================>
 
-def delete_post(post_name,window):
+def delete_post(post_name:str, window:sg.Window):
     """
     Delete a post from the database and update the GUI.
 
     Args:
         post_name (str): The name of the post to delete.
-        container (sg.Column): The container to update after deletion.
+        window (sg.Window): The window needed to update the GUI.
     """
     if sg.popup_yes_no(f'Are you sure you want to delete the post titled {post_name}?') == 'Yes':
 
         rmtree(resource_path(f'src\\assets\\post_img\\{post_name}'))
         window[f'{post_name}_container'].update(visible=False)
 
-        del window.key_dict[f'{post_name}_container']
-        del window.key_dict[f'add-more-candidates-{post_name}']
-        del window.key_dict[f'edit-{post_name}']
-        del window.key_dict[f'cancel-{post_name}']
-        del window.key_dict[f'delete-{post_name}']
+        del window.AllKeysDict[f'{post_name}_container']
+        del window.AllKeysDict[f'add-more-candidates-{post_name}']
+        del window.AllKeysDict[f'edit-{post_name}']
+        del window.AllKeysDict[f'cancel-{post_name}']
+        del window.AllKeysDict[f'delete-{post_name}']
 
         cursor.execute(f'SELECT MAX(id) FROM {post_name}')
         max_id = cursor.fetchone()[0]
+        keys_dict = window.AllKeysDict
         for i in range(1,max_id+1):
-            if f'{post_name}-name-{i}' in window.key_dict:
-                del window.key_dict[f'{post_name}-name-{i}']
-                del window.key_dict[f'{post_name}-image-{i}']
-                del window.key_dict[f'{post_name}-view-image-{i}']
-                del window.key_dict[f'{post_name}-image-button-{i}']
-                del window.key_dict[f'del-{post_name}-{i}']
+            if f'{post_name}-name-{i}' in keys_dict:
+                del window.AllKeysDict[f'{post_name}-{i}']
+                del window.AllKeysDict[f'{post_name}-name-{i}']
+                del window.AllKeysDict[f'{post_name}-image-{i}']
+                del window.AllKeysDict[f'{post_name}-view-image-{i}']
+                del window.AllKeysDict[f'{post_name}-image-button-{i}']
+                del window.AllKeysDict[f'del-{post_name}-{i}']
         cursor.execute(f'DROP TABLE "{post_name}";')
         conn.commit()
         
         other_posts_exist = False
-        for key in window.key_dict:
+        for key in window.AllKeysDict:
             if key.endswith('_container') and key!=f'{post_name}_container':
                 other_posts_exist = True
                 break
         if not other_posts_exist:
             window['start-elections-btn'].update(visible=False)
             window['added_posts_heading'].update(visible=False)
+        if post_name in rm_candidates_posts:
+            del rm_candidates_posts[post_name]
+        window.refresh()
+        window['posts-container'].contents_changed()
 
 
-def add_more_candidates(post_name, candidates_info, window):
+def add_more_candidates(post_name : str, candidates_info:list, window:sg.Window):
     cursor.execute(f'SELECT MAX(id) FROM "{post_name}"')
     key_val = cursor.fetchone()[0] + 1
+    key_val_2 = key_val
     base_img_names = []
 
     post_img_path = f'src\\assets\\post_img\\{post_name}'
@@ -280,7 +306,7 @@ def add_more_candidates(post_name, candidates_info, window):
     # Copy candidate images to the directory and insert candidate info into the table
     for candidate in candidates_info:
         base_image_name = os.path.basename(candidate[1])
-        base_img_names.append(base_image_name)
+        base_img_names.append(base_image_name.split('.')[0]+'.png')
 
         image_name = f'{os.path.splitext(base_image_name)[0]}.png'
         image_path = f'{post_img_path}\\{image_name}' 
@@ -288,7 +314,11 @@ def add_more_candidates(post_name, candidates_info, window):
         im.thumbnail(candidate_image_size)
         im.save(image_path, format = "png")
 
-        cursor.execute(f'INSERT INTO "{post_name}" (name, image) VALUES (?,?)', (candidate[0], image_path))
+        cursor.execute(f'INSERT INTO "{post_name}" (id,name, image) VALUES (?,?,?)', (key_val_2,candidate[0], image_path))
+        if post_name in rm_candidates_posts:
+            if candidate[0] in rm_candidates_posts[post_name]:
+                rm_candidates_posts[post_name].remove(candidate[0])
+        key_val_2+=1
     
     # Commit the changes to the database
     conn.commit()
@@ -314,26 +344,24 @@ def save_edited_post(post_name,max_id,candidates_info,window):
     - candidates_info (list): List of tuples containing candidate information (name, image_path).
     - window: PySimpleGUI window object to interact with GUI elements.
     '''
+
     window[f'edit-{post_name}'].metadata = 'Edit'
     window[f'edit-{post_name}'].update(edit_btn)
     save_post_query = f"""
-UPDATE "{post_name}"
-SET name = ?,image= ?
-WHERE id = ? AND (name != ? OR image != ?);
-"""
+        UPDATE "{post_name}"
+        SET name = ?,image= ?
+        WHERE id = ? AND (name != ? OR image != ?);
+    """
     post_img_path = f'src\\assets\\post_img\\{post_name}'
     cursor.execute(f'SELECT id FROM {post_name}')
     all_ids = [i[0] for i in cursor.fetchall()]
-    all_ids.reverse()
+    all_ids.sort()
     curr_id = all_ids[0]
-    print('all_ids ->',all_ids)
-    print('candidate_info ->',candidates_info)
-    print('candidates_rm_posts ->',candidates_rm_posts)
-    for i in candidates_info:
-        for j in candidates_rm_posts:
-            if i[0] == j[1] and post_name == j[0]:
+    if post_name in rm_candidates_posts:
+        for i in candidates_info:
+            if i[0] in rm_candidates_posts[post_name]:
                 candidates_info.remove(i)
-    print('candidate_info ->',candidates_info)
+
     for candidate in candidates_info:
 
         cursor.execute(f'SELECT image FROM "{post_name}" WHERE id={curr_id}')
@@ -365,11 +393,15 @@ WHERE id = ? AND (name != ? OR image != ?);
                 os.remove(resource_path(remove_file))
             except FileNotFoundError:
                 print('save_edited_post() -> Error in removing image.')
-    
+
+    keys_dict = window.AllKeysDict
     for i in range(1,max_id+1):
-        if f'{post_name}-name-{i}' in window.key_dict:
-            window[f'{post_name}-name-{i}'].update(disabled=True) 
-            window[f'{post_name}-image-button-{i}'].update(disabled=True,button_color=f'{dark_grey} on {grey}')  
+        if f'{post_name}-name-{i}' in keys_dict:
+            cursor.execute(f'SELECT name, image FROM {post_name} WHERE id={i}')
+            name, image = cursor.fetchone()
+            window[f'{post_name}-name-{i}'].update(name,disabled=True) 
+            window[f'{post_name}-image-button-{i}'].update(disabled=True,button_color=f'{dark_grey} on {grey}')
+            window[f'{post_name}-image-{i}'].update(resource_path(image))
 
 
 def edit_post(post_name,window):
@@ -386,8 +418,9 @@ def edit_post(post_name,window):
     max_id = cursor.fetchone()[0]
 
     window[f'cancel-{post_name}'].update(visible=True)
+    keys_dict = window.AllKeysDict
     for i in range(1,max_id+1):
-        if f'{post_name}-name-{i}' in window.key_dict:
+        if f'{post_name}-name-{i}' in keys_dict:
             window[f'{post_name}-name-{i}'].update(disabled=False,background_color='#EBEBEB')  # Enable candidate name input fields
             window[f'{post_name}-image-button-{i}'].update(disabled=False,button_color = '#FFFFFF on #4E46B4')  # Enable browse buttons for candidate images
 
@@ -395,41 +428,56 @@ def edit_post(post_name,window):
 def del_candidate(event,window):
     info_list = event.split('-')
     post_name = info_list[1]
-    candidate_id = info_list[2]
+    if window[f'edit-{post_name}'].metadata == 'Edit':
+        candidate_id = info_list[2]
+        cursor.execute(f'SELECT name FROM "{post_name}" WHERE id={candidate_id}')
+        candidate_name = cursor.fetchone()[0]
+        avail_candidates = [i for i in window.AllKeysDict if i.startswith(f'del-{post_name}') and i!=f'del-{post_name}-{candidate_id}']
+        
+        if len(avail_candidates)==1:
+            confirm = sg.PopupYesNo(f'With two candidates left, removing {candidate_name} will delete the post {post_name}. Would you like to continue?')
+            if confirm=='Yes':
+                delete_post(post_name,window)
+        
+        else:
+            confirm = sg.PopupYesNo(f'Are you sure you want to remove {candidate_name} from the post {post_name}?')
+            if confirm=='Yes':
+                cursor.execute(f'SELECT image FROM {post_name} WHERE id={candidate_id}')
+                image_path = resource_path(cursor.fetchone()[0])
 
-    cursor.execute(f'SELECT name FROM "{post_name}" WHERE id={candidate_id}')
-    candidate_name = cursor.fetchone()[0]
-    avail_candidates = [i for i in window.key_dict if i.startswith(f'del-{post_name}') and i!=f'del-{post_name}-{candidate_id}']
-    
-    if len(avail_candidates)==1:
-        confirm = sg.PopupYesNo(f'With two candidates left, removing {candidate_name} will delete the post {post_name}. Would you like to continue?')
-        if confirm=='Yes':
-            delete_post(post_name,window)
-    
+                try:
+                    os.remove(image_path)
+                except FileNotFoundError:
+                    print('save_edited_post() -> Error in removing image.')
+
+                cursor.execute(f'DELETE FROM "{post_name}" WHERE id={candidate_id}')
+                conn.commit()
+                window[f'{post_name}-{candidate_id}'].update(visible=False)
+                del window.AllKeysDict[f'{post_name}-{candidate_id}']
+                del window.AllKeysDict[f'{post_name}-name-{candidate_id}']
+                del window.AllKeysDict[f'{post_name}-image-{candidate_id}']
+                del window.AllKeysDict[f'{post_name}-view-image-{candidate_id}']
+                del window.AllKeysDict[f'{post_name}-image-button-{candidate_id}']
+                del window.AllKeysDict[f'del-{post_name}-{candidate_id}']
+                window.refresh()
+                if post_name in rm_candidates_posts:
+                    rm_candidates_posts[post_name].append(candidate_name)
+                else:
+                    rm_candidates_posts[post_name] = [candidate_name,]
     else:
-        confirm = sg.PopupYesNo(f'Are you sure you want to remove {candidate_name} from the post {post_name}?')
-        if confirm=='Yes':
-            cursor.execute(f'DELETE FROM "{post_name}" WHERE id={candidate_id}')
-            conn.commit()
-            window[f'{post_name}-{candidate_id}'].update(visible=False)
-            del window.key_dict[f'{post_name}-{candidate_id}']
-            del window.key_dict[f'{post_name}-name-{candidate_id}']
-            del window.key_dict[f'{post_name}-image-{candidate_id}']
-            del window.key_dict[f'{post_name}-view-image-{candidate_id}']
-            del window.key_dict[f'{post_name}-image-button-{candidate_id}']
-            del window.key_dict[f'del-{post_name}-{candidate_id}']
-            candidates_rm_posts.append((post_name,candidate_name))
+        error_popup('Delete operation is not available while in edit mode.')
 
 
 # <================================= CREATE NEW POST ====================================>
 
-def create_table(post_name, candidate_info,window):
+
+def create_table(post_name, candidate_details,window):
     """
     Create a table for the given post name and insert candidate information into the table.
 
     Args:
         post_name (str): The name of the post.
-        candidate_info (list): A list of tuples containing candidate names and image paths.
+        candidate_details (list): A list of tuples containing candidate names and image paths.
     """
     # Create the table if it does not exist
     cursor.execute(f'''
@@ -446,7 +494,7 @@ def create_table(post_name, candidate_info,window):
     os.makedirs(post_img_path)
     
     # Copy candidate images to the directory and insert candidate info into the table
-    for candidate in candidate_info:
+    for candidate in candidate_details:
         base_image_name = os.path.basename(candidate[1])
         image_name = f'{os.path.splitext(base_image_name)[0]}.png'
         image_path = f'{post_img_path}\\{image_name}' 
@@ -466,6 +514,8 @@ def create_table(post_name, candidate_info,window):
     window['added_posts_heading'].update(visible=True)
     window['start-elections-btn'].update(visible=True)
     window.extend_layout(window['posts-container'],post_layout)
+    window.refresh()
+    window['posts-container'].contents_changed()
 
 
 def create_post_modal(post_name, no_of_candidates, window, action='create post'):
@@ -500,7 +550,7 @@ def create_post_modal(post_name, no_of_candidates, window, action='create post')
         event, values = post_modal.read() 
         if event != sg.WIN_CLOSED:
             if event == f'{post_name}-save-btn':
-                input_validation(post_modal, no_of_candidates, values, post_name, action, window)
+                check_inputs_filled(post_modal, no_of_candidates, values, post_name, action, window)
         else:
             break
 
@@ -514,8 +564,8 @@ def start_election():
         if f'{election_name}.db' in available_results:
             error_popup('A result with this election name already exists. Please try again with a different name.')
 
-        elif election_name.replace(' ','').isalnum()==False:
-            error_popup('Election name can only contain alphabets and digits.')
+        elif election_name.replace(' ','').replace('-','').replace('_','').isalnum()==False:
+            error_popup('Election name can only contain alphabets, digits and special characters \'-\' & \'_\'.')
 
         elif f'{election_name}.db' not in available_results:
             passwd_correct = display_password_window()[0]
@@ -526,10 +576,10 @@ def start_election():
                 conn.commit()
                 return election_name.strip()
             
-def view_image(postname,image_path,window):
+def view_image(post_name,image_path,window):
     
     # If in edit mode then save image in 400X400 resolution to not crop the image.
-    if window[f'edit-{postname}'].metadata == 'Save':
+    if window[f'edit-{post_name}'].metadata == 'Save':
         im = Image.open(image_path)
         im.thumbnail(candidate_image_size)
         bytesio = BytesIO()
@@ -543,6 +593,26 @@ def view_image(postname,image_path,window):
         if event == sg.WIN_CLOSED:
             break
     image_view_window.close()
+
+def change_id():
+    """
+    Change id of the posts whose candidates have been deleted
+    """
+    if rm_candidates_posts:
+        for i in rm_candidates_posts:
+            cursor.execute(f'SELECT id FROM "{i}"')
+            existing_ids = [j[0] for j in cursor.fetchall()]
+            # Assign temporary IDs to avoid conflicts
+            for k in range(len(existing_ids)):
+                temp_id = -(k + 1)  # Assign a negative temporary ID
+                cursor.execute(f'UPDATE {i} SET id=? WHERE id=?', (temp_id, existing_ids[k]))
+
+            # Assign new final IDs
+            for k in range(len(existing_ids)):
+                new_id = k + 1
+                temp_id = -(k + 1)  # The same negative temporary ID
+                cursor.execute(f'UPDATE {i} SET id=? WHERE id=?', (new_id, temp_id))
+    conn.commit()
 
 # <======================================== DISPLAY THE ADMIN PANEL ===================================>
 
@@ -565,8 +635,7 @@ def display_admin_panel():
     window['post-name'].set_focus()
     
     while True:
-        event, values = window.read() 
-
+        event, values = window.read()
         if event != sg.WIN_CLOSED:
             if event == 'add-post-btn' or event=='post-name_Enter' or event=='no-of-candidates_Enter':
                 post_name = values['post-name'].strip()
@@ -600,7 +669,7 @@ def display_admin_panel():
                 post_being_edited = event.partition('-')[2]
                 cursor.execute(f'SELECT MAX(id) FROM "{post_being_edited}";')
                 max_id = cursor.fetchone()[0]
-                input_validation(window,max_id,values,post_being_edited,'save post')
+                check_inputs_filled(window,max_id,values,post_being_edited,'save post')
                 
             # Cancel changes
             elif event.startswith('cancel-'):
@@ -613,7 +682,7 @@ def display_admin_panel():
                 max_id = cursor.fetchone()[0]
                 cursor.execute(f'SELECT id FROM {postname}')
                 all_ids = [i[0] for i in cursor.fetchall()]
-                all_ids.reverse()
+                all_ids.sort()
                 curr_id = all_ids[0]
 
                 for i in post_data:
@@ -623,10 +692,9 @@ def display_admin_panel():
                     if curr_id_index != len(all_ids)-1:
                         curr_id = all_ids[curr_id_index+1]
 
-                for i in range(1,max_id+1):
-                    if f'{postname}-name-{i}' in window.key_dict:
-                        window[f'{postname}-name-{i}'].update(disabled=True) 
-                        window[f'{postname}-image-button-{i}'].update(disabled=True,button_color='#e8e8e8 on #f2f2f2') 
+                for i in all_ids:
+                    window[f'{postname}-name-{i}'].update(disabled=True) 
+                    window[f'{postname}-image-button-{i}'].update(disabled=True,button_color='#e8e8e8 on #f2f2f2')  
                 window[f'edit-{postname}'].metadata = 'Edit' 
                 window[f'edit-{postname}'].update(edit_btn) 
                 window[event].update(visible=False) 
@@ -649,21 +717,25 @@ def display_admin_panel():
             # Add more candidates to existing post
             elif event.startswith('add-more-candidates'):
                 post_name = event.split('-')[3]
-                try:
-                    num_candidates = sg.PopupGetText('Enter the no. of candidates you would like to add')
-                    if num_candidates:
-                        num_candidates=int(num_candidates)
-                        if num_candidates<1:
-                            raise ValueError('No. of candidates should at least be 1.')
-                        else:
-                            create_post_modal(post_name, num_candidates, window, action='add more candidates')
-                except ValueError:
-                    error_popup('No. of candidates should be at least 1.')
+                if window[f'edit-{post_name}'].metadata == 'Edit':
+                    try:
+                        num_candidates = sg.PopupGetText('Enter the no. of candidates you would like to add')
+                        if num_candidates:
+                            num_candidates=int(num_candidates)
+                            if num_candidates<1:
+                                raise ValueError('No. of candidates should at least be 1.')
+                            else:
+                                create_post_modal(post_name, num_candidates, window, action='add more candidates')
+                    except ValueError:
+                        error_popup('No. of candidates should be at least 1.')
+                else:
+                    error_popup('Can\'t add more candidates while in edit mode.')
 
             # Start Elections:
             elif event=='start-elections-btn':
                 election_name = start_election()
                 if election_name:
+                    change_id()
                     window.close()
                     display_voting_panel(election_name)
             
@@ -675,20 +747,5 @@ def display_admin_panel():
                     window[event].update(visible=False)
         else:
             break
-    if candidates_rm_posts:
-        for i[0] in candidates_rm_posts:
-            cursor.execute(f'SELECT id FROM "{i[0]}"')
-            existing_ids = [j[0] for j in cursor.fetchall()]
-        
-        # Assign temporary IDs to avoid conflicts
-        for k in range(len(existing_ids)):
-            temp_id = -(k + 1)  # Assign a negative temporary ID
-            cursor.execute(f'UPDATE {i[0]} SET id=? WHERE id=?', (temp_id, existing_ids[k]))
-
-        # Assign new final IDs
-        for k in range(len(existing_ids)):
-            new_id = k + 1
-            temp_id = -(k + 1)  # The same negative temporary ID
-            cursor.execute(f'UPDATE {i[0]} SET id=? WHERE id=?', (new_id, temp_id))
-    conn.commit()
+    change_id()
     window.close()

@@ -27,6 +27,7 @@ passwd_correct, election_status = None, None
 unchecked_box = resource_path('src\\assets\\btn\\unchecked_box.png')
 checked_box = resource_path('src\\assets\\btn\\checked_box.png')
 
+
 def display_candidates(post_name, other_post_exists):
     """
     Display candidates from the specified post table.
@@ -84,7 +85,8 @@ def display_candidates(post_name, other_post_exists):
         return [sg.pin(sg.Column([[sg.Column(temp_layout,pad=((15,7.5)),background_color='#FFFFFF')],btn_to_add],key=f'post-container-{post_name}'),shrink=True)]
     else:
         return [sg.pin(sg.Column([[sg.Column(temp_layout,pad=((15,7.5)),background_color='#FFFFFF')],btn_to_add],key=f'post-container-{post_name}',visible=False),shrink=True)]
-            
+
+        
 # Load available election data
 def load_election_data():
     """
@@ -117,6 +119,7 @@ def load_election_data():
         post_num+=1
     posts_layout.append(sg.Column(temp_layout,vertical_scroll_only=True,expand_y=True,scrollable=True,pad=(25,25),key='parent-container'))
 
+
 def passwd_check_end_elections():
     '''
     Check the password for ending elections and update global variables accordingly.
@@ -126,6 +129,16 @@ def passwd_check_end_elections():
         passwd_correct, election_status = display_password_window()
     except:
         print('User closed the password popup.')
+
+
+# Function to make custom radio button work
+def check_radio(key:str, post_name:str, max_id:int, window:sg.Window):
+    for i in range(1,max_id+1):
+        window[f'{post_name}-{i}-checkbox'].update(unchecked_box) 
+        window[f'{post_name}-{i}-checkbox'].metadata[0] = False 
+    window[key].update(checked_box) 
+    window[key].metadata[0] = True
+
 
 def display_voting_panel(election_name):
     global post_names,posts_layout, passwd_correct,election_status
@@ -145,14 +158,6 @@ def display_voting_panel(election_name):
     window.Finalize()
     window.Maximize()
     
-    # Function to make custom radio button work
-    def check_radio(key,post_name,max_id):
-        for i in range(1,max_id+1):
-            window[f'{post_name}-{i}-checkbox'].update(unchecked_box) 
-            window[f'{post_name}-{i}-checkbox'].metadata[0] = False 
-        window[key].update(checked_box) 
-        window[key].metadata[0] = True
-    
     while True:
         event, values = window.read() 
         
@@ -164,7 +169,7 @@ def display_voting_panel(election_name):
                 else:
                     key = event
                 post_name = key.split('-')[0]
-                check_radio(key,post_name,window[key].metadata[1]) 
+                check_radio(key, post_name, window[key].metadata[1],window) 
             
             # Submit the votes on click of submit button and then ask for password after breaking while loop
             elif event == 'submit-votes':
@@ -236,7 +241,7 @@ def display_voting_panel(election_name):
                 window[f'post-container-{curr_post}'].update(visible=False)
                 window[f'post-container-{post_to_view}'].update(visible=True)
                 window.refresh()  # refresh required here to change the scroll bar according to contents
-                window['parent-container'].contents_changed()  
+                window['parent-container'].contents_changed()
 
             elif (event==sg.WINDOW_CLOSE_ATTEMPTED_EVENT or event=='Exit') and display_password_window()[0]:
                 user_quit = True
