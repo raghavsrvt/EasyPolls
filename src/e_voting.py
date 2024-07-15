@@ -197,6 +197,8 @@ def display_voting_panel(election_name):
                                 cursor.execute(f'UPDATE "{post_name}" SET votes = votes + 1 WHERE id={j}')
                                 conn.commit()
                                 break
+                    from src.admin_functions import error_popup
+                    error_popup('Your votes have been successfully submitted.','#2E7D32')
                     break
 
             elif event == 'end-elections-btn':

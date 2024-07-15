@@ -43,6 +43,7 @@ def download_result(cursor_result:sqlite3.Cursor, conn_result:sqlite3.Connection
 
 
 def get_result_layout(posts_for_result:list, cursor_result:sqlite3.Cursor):
+    result_layout = []
     for i in posts_for_result:
 
         cursor_result.execute(f'SELECT name,votes FROM "{i[0]}"')
@@ -51,7 +52,7 @@ def get_result_layout(posts_for_result:list, cursor_result:sqlite3.Cursor):
         cursor_result.execute(f'SELECT MAX(votes) FROM "{i[0]}"')
         max_votes = cursor_result.fetchone()[0]
 
-        candidate_result_leyout = [[sg.Text(f'Post: {i[0]}',font=(None,18,'bold'),pad=(10,10),background_color='#FFFFFF')]]  # Layout that will contain the results of candidates
+        candidate_result_layout = [[sg.Text(f'Post: {i[0]}',font=(None,18,'bold'),pad=(10,10),background_color='#FFFFFF')]]  # Layout that will contain the results of candidates
                     
         for j in curr_post_data:
 
@@ -69,14 +70,15 @@ def get_result_layout(posts_for_result:list, cursor_result:sqlite3.Cursor):
                 vote_text = sg.Text(f'{j[0]} ({j[1]} Votes)',background_color='#FFFFFF', pad=((10,5),(10,0)))
                 bar_color = ('#E2E2E2','#E2E2E2')
                         
-            candidate_result_leyout.extend([[vote_text],[sg.ProgressBar(j[1],size=(j[1]*0.2,6),bar_color=bar_color,pad=((10,0),(2,0)))]])
-            candidate_result_leyout.extend([[sg.Text('',size=(0,1),font=(None,5),background_color='#FFFFFF')]])
-    
-    return candidate_result_leyout
+            candidate_result_layout.extend([[vote_text],[sg.ProgressBar(j[1],size=(j[1]*0.2,6),bar_color=bar_color,pad=((10,0),(2,0)))]])
+            print('Name:',j[0])
+        candidate_result_layout.extend([[sg.Text('',size=(0,1),font=(None,5),background_color='#FFFFFF')]])
+        result_layout.append([sg.Column(candidate_result_layout,expand_x=True,background_color='#FFFFFF',pad=(10,10))])
+    return result_layout
 
 
 def show_result_window(result_name:str):
-    result_layout = []
+    
     conn_result = sqlite3.connect(resource_path(f'src\\results\\result-{result_name}.db'))
     cursor_result = conn_result.cursor()
 
@@ -86,10 +88,7 @@ def show_result_window(result_name:str):
 
     cursor_result.execute(f'SELECT SUM(votes) FROM "{posts_for_result[0][0]}"')
     tot_votes = cursor_result.fetchone()[0]
-                
-    
-    result_layout.append([sg.Column(get_result_layout(posts_for_result,cursor_result),expand_x=True,background_color='#FFFFFF',pad=(10,10))])
-                
+    result_layout = get_result_layout(posts_for_result, cursor_result)
     result_header = [sg.Frame('',[[sg.Text(f'{result_name} Results',text_color='#4E46B4',font=(None,18,'bold'),pad=(15,10)),
                                            sg.Push(),sg.Text(f'Total Votes: {tot_votes}',pad=(15,10)),sg.Image(download_btn,enable_events=True,key=f'download-result',pad=((10,10),(5,5)))]],expand_x=True)]
 

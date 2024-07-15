@@ -18,10 +18,10 @@ cancel_btn = resource_path(r'src\assets\btn\cancel_btn.png')
 edit_btn = resource_path(r'src\assets\btn\edit_btn.png')
 ok_btn = resource_path(r'src\assets\btn\ok_btn.png')
 save_btn = resource_path(r'src\assets\btn\save_btn.png')
+add_candidates_lg_btn = resource_path(r'src\assets\btn\add_candidates_lg_btn.png')
 add_post_btn = resource_path(r'src\assets\btn\add_post_btn.png')
 start_election_btn = resource_path(r'src\assets\btn\start_election_btn.png')
 available_results_btn = resource_path(r'src\assets\btn\available_results_btn.png')
-continue_btn = resource_path(r'src\assets\btn\continue_btn.png')
 del_candidate_btn = resource_path(r'src\assets\btn\delete_candidate_btn.png')
 add_candidates_btn = resource_path(r'src\assets\btn\add_candidates_btn.png')
 
@@ -60,7 +60,7 @@ def display_candidate_info(candidate_details,post_name,key_val):
                     sg.Input(resource_path(candidate_details[1]),key=f'{post_name}-image-{key_val}',expand_y=True,disabled=True,size=(30),pad=(8,4),text_color='#595D62'),
                     sg.Image(view_img_btn,enable_events=True,key=f'{post_name}-view-image-{key_val}',pad=((0,8),(4, 4)),background_color='#FFFFFF'),
                     sg.FileBrowse('   Browse Image   ', key=f'{post_name}-image-button-{key_val}',target=f'{post_name}-image-{key_val}',file_types=(("Image Files", "*.png;*.jpg;*.jpeg;*.webp"),),disabled=True,button_color=f'{dark_grey} on {grey}',pad=((0,12),(4, 4)),expand_y=True,font=(None,11,'bold')),
-                    sg.Image(del_candidate_btn,enable_events=True,key=f'del-{post_name}-{key_val}',background_color='#FFFFFF',tooltip='Remove the candidate.')
+                    sg.Image(del_candidate_btn,enable_events=True,key=f'del-{post_name}-{key_val}',background_color='#FFFFFF',tooltip='Remove the candidate')
                     ]
     return col_layout
 
@@ -84,7 +84,7 @@ def style_added_posts(post_name,posts_layout):
                     sg.Push(background_color='#FFFFFF'),sg.Image(add_candidates_btn,enable_events=True,key=f'add-more-candidates-{post_name}',pad=((0,8),(12, 5))),
                     sg.Image(edit_btn,enable_events=True,key=f'edit-{post_name}',pad=((0,8),(12, 5)),metadata='Edit'),
                     sg.pin(sg.Image(cancel_btn,enable_events=True,key=f'cancel-{post_name}',background_color='#FFFFFF',pad=((0,8),(12, 5)),visible=False)),
-                    sg.Image(delete_btn,enable_events=True,key=f'delete-{post_name}',pad=((0,12),(12, 5)))]] 
+                    sg.Image(delete_btn,enable_events=True,key=f'delete-{post_name}',pad=((0,12),(12, 5)),tooltip=f'Delete {post_name} post')]] 
 
     key_val = 1
     for i in post_data:
@@ -135,7 +135,7 @@ def load_posts(main_layout):
     return main_layout
 
 
-def error_popup(error_message,color=red):
+def error_popup(error_message:str,color=red):
     error_popup = sg.Window(error_message,[[sg.Text(error_message,text_color=color,font=(None,12,'bold'))],
                                            [sg.Image(ok_btn,key='ok-btn',enable_events=True)]],modal=True,finalize=True)
     error_popup.bind('<Return>','_Enter')
@@ -539,7 +539,7 @@ def create_post_modal(post_name, no_of_candidates, window, action='create post')
             sg.FileBrowse('   Browse Image   ', file_types=(("Image Files", "*.png;*.jpg;*.jpeg;*.webp"),),font=(None,11,'bold'),expand_y=True)
         ]])]
         column_layout.append(candidate_layout) 
-    column_layout.append([sg.Image(continue_btn, key=f'{post_name}-save-btn',pad=(5,5),enable_events=True)]) 
+    column_layout.append([sg.Image(add_post_btn if action=='create post' else add_candidates_lg_btn, key=f'{post_name}-save-btn',pad=(5,5),enable_events=True)]) 
     post_modal_layout.append([sg.Column(column_layout,vertical_scroll_only=True,scrollable=True,expand_x=True,expand_y=True)]) 
     
     # Create and display the modal window
@@ -562,7 +562,7 @@ def start_election():
     if election_name:
         election_name = election_name.strip()
         if f'{election_name}.db' in available_results:
-            error_popup('A result with this election name already exists. Please try again with a different name.')
+            error_popup(f"A result with this election name already exists. Please choose a different name or delete the existing '{election_name}' result.")
 
         elif election_name.replace(' ','').replace('-','').replace('_','').isalnum()==False:
             error_popup('Election name can only contain alphabets, digits and special characters \'-\' & \'_\'.')
@@ -626,7 +626,7 @@ def display_admin_panel():
             [sg.Column([[sg.Text('Post name: ',pad=(0,11)), sg.Input(key='post-name',size=(40,50),expand_y=True,expand_x=True)],
                         [sg.Text('No of candidates: ',pad=(0,11)), sg.Input(key='no-of-candidates',size=(40,50),expand_y=True)]],pad=(9,0))],
             
-            [sg.Image(add_post_btn, key='add-post-btn',pad=(9,10),enable_events=True)]]
+            [sg.Image(add_candidates_lg_btn, key='add-candidates-btn',pad=(9,10),enable_events=True)]]
 
     layout = load_posts(layout)
     window = sg.Window('Admin  •  EasyPolls  •  Made by Raghav Srivastava (GitHub: raghavsrvt)', layout, size=(screen_width - 80, screen_height - 120), resizable=True,finalize=True)
@@ -637,7 +637,7 @@ def display_admin_panel():
     while True:
         event, values = window.read()
         if event != sg.WIN_CLOSED:
-            if event == 'add-post-btn' or event=='post-name_Enter' or event=='no-of-candidates_Enter':
+            if event == 'add-candidates-btn' or event=='post-name_Enter' or event=='no-of-candidates_Enter':
                 post_name = values['post-name'].strip()
                 
                 # Validate the post name
