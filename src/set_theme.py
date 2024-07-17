@@ -4,7 +4,7 @@ from src.get_absolute_path import resource_path
 def set_theme():
     font_inter = ImageFont.truetype(resource_path('src\\assets\\Inter.ttf'),16)
     inter_font_family = font_inter.getname()[0]
-    sg.set_options(font=(inter_font_family,12),suppress_raise_key_errors=True, suppress_error_popups=True, suppress_key_guessing=True)
+    sg.set_options(font=(inter_font_family,11),suppress_raise_key_errors=True, suppress_error_popups=True, suppress_key_guessing=True)
     sg.set_global_icon(resource_path('src\\assets\\logo.ico'))
     sg.theme_add_new(
         'MoonLight', 

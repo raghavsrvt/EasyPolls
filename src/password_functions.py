@@ -1,12 +1,10 @@
-import PySimpleGUI as sg, hashlib, os, sqlite3
-from src.set_theme import set_theme
+import PySimpleGUI as sg, hashlib, os
+from sqlite3 import connect
 from src.get_absolute_path import resource_path
 
-set_theme()
+CONTINUE_BTN = resource_path(r'src\assets\btn\continue_btn.png')
 
-continue_btn = resource_path('src\\assets\\btn\\continue_btn.png')
-
-conn = sqlite3.connect(os.path.join(resource_path('src\\'),'election.db'))
+conn = connect(os.path.join(resource_path('src\\'),'election.db'))
 cursor = conn.cursor()
 
 cursor.execute('''
@@ -28,7 +26,7 @@ def passwd_layout(passwd):
         return [sg.Column([[sg.Text('Enter password: ',pad=(0,11)), sg.Input(key='passwd-1',size=(40),expand_y=True,password_char='•')]],pad=((6,0),(11,11)))]
     else:
         return [sg.Column([
-            [sg.Text('Create an admin password',pad=((0,0),(11,0)),font=(None,18,'bold'))],
+            [sg.Text('Create an admin password',pad=((0,0),(11,0)),font=(None,15,'bold'))],
             [sg.Text('Access exclusive rights like creating election posts and viewing results.', text_color='#737373', pad=((0,0),(11,18)))],
             [sg.Text('Enter password: ',pad=(0,11)), sg.Input(key='passwd-1',size=(40),expand_y=True,expand_x=True,password_char='•')],
             [sg.Text('Confirm password: ',pad=(0,11)), sg.Input(key='passwd-2',size=(40),expand_y=True,password_char='•')]
@@ -59,8 +57,8 @@ def display_password_window():
     # Define the layout of the window
     layout = [
         passwd_layout(passwd),
-        [sg.pin(sg.Text(key='passwd-error', text_color='#D33030',font=(None,12,'bold'),visible=False),shrink=True)],
-        [sg.Image(continue_btn, key='passwd-submit',enable_events=True,pad=((6,6)))]
+        [sg.pin(sg.Text(key='passwd-error', text_color='#D33030',font=(None,11,'bold'),visible=False),shrink=True)],
+        [sg.Image(CONTINUE_BTN, key='passwd-submit',enable_events=True,pad=((6,6)))]
     ]
     window = sg.Window('Admin Password  •  EasyPolls', layout, finalize=True, modal=True)
 

@@ -1,34 +1,34 @@
-import PySimpleGUI as sg, sqlite3
+import PySimpleGUI as sg
+from sqlite3 import connect
 from src.password_functions import display_password_window
 from shutil import rmtree
-from src.set_theme import set_theme
 from src.get_absolute_path import resource_path
+from src.admin_functions import error_popup
 
-set_theme()
-submit_btn = resource_path('src\\assets\\btn\\submit_btn.png')
-end_election_btn = resource_path('src\\assets\\btn\\end_election_btn.png')
-prev_btn = resource_path('src\\assets\\btn\\prev_btn.png')
-next_btn = resource_path('src\\assets\\btn\\next_btn.png')
-grey = '#E2E2E2'
-dark_grey = '#F5F5F5'
+SUBMIT_BTN = resource_path('src\\assets\\btn\\submit_btn.png')
+END_ELECTION_BTN = resource_path('src\\assets\\btn\\end_election_btn.png')
+PREV_BTN = resource_path('src\\assets\\btn\\prev_btn.png')
+NEXT_BTN = resource_path('src\\assets\\btn\\next_btn.png')
+GREY = '#E2E2E2'
+DARK_GREY = '#F5F5F5'
 
 # Connect to the SQLite database
-conn = sqlite3.connect(resource_path('src\\election.db'))
+conn = connect(resource_path('src\\election.db'))
 cursor = conn.cursor()
 
 screen_width, screen_height = sg.Window.get_screen_size()
-candidate_image_size = (400, 400)
+CANDIDATE_IMG_SIZE = (400, 400)
 
 post_names = []
 posts_layout = []
 
 passwd_correct, election_status = None, None
 
-unchecked_box = resource_path('src\\assets\\btn\\unchecked_box.png')
-checked_box = resource_path('src\\assets\\btn\\checked_box.png')
+UNCHECKED_BOX = resource_path(r'src\assets\btn\unchecked_box.png')
+CHECKED_BOX = resource_path(r'src\assets\btn\checked_box.png')
 
 
-def display_candidates(post_name, other_post_exists):
+def display_candidates(post_name:str, other_post_exists:list):
     """
     Display candidates from the specified post table.
 
@@ -51,9 +51,9 @@ def display_candidates(post_name, other_post_exists):
 
     for i in post_data:
 
-        checkbox_element = sg.Image(unchecked_box,enable_events=True,key=f'{post_name}-{key_val}-checkbox',metadata=[False,max_id],background_color='#FFFFFF',pad=((0,0),(5,6)))
-        candidate_image = [sg.Image(resource_path(i[1]),size=candidate_image_size,background_color='#FFFFFF')]
-        checkbox_text = sg.Text(i[0],key=f'{post_name}-{key_val}-checkboxtext',enable_events=True,font=(None,14),background_color='#FFFFFF',pad=((2,0),(5,7)))
+        checkbox_element = sg.Image(UNCHECKED_BOX,enable_events=True,key=f'{post_name}-{key_val}-checkbox',metadata=[False,max_id],background_color='#FFFFFF',pad=((0,0),(5,6)))
+        candidate_image = [sg.Image(resource_path(i[1]),size=CANDIDATE_IMG_SIZE,background_color='#FFFFFF')]
+        checkbox_text = sg.Text(i[0],key=f'{post_name}-{key_val}-checkboxtext',enable_events=True,background_color='#FFFFFF',pad=((2,0),(5,7)))
 
         if(col_val==1):
             col_1 = sg.Column([candidate_image,[sg.Push(background_color='#FFFFFF'),checkbox_element,checkbox_text,sg.Push(background_color='#FFFFFF')]],background_color='#FFFFFF',pad=((20,10),(20,0)))
@@ -67,15 +67,18 @@ def display_candidates(post_name, other_post_exists):
             col_1,col_2 = None,None
             col_val = 1
         key_val+=1
-    temp_layout.insert(0, [sg.Text(post_name,font=(None,18,'bold'),pad=((24,0),(20,0)),background_color='#FFFFFF',text_color='black')])
+    
+    # Insert the text with post name
+    temp_layout.insert(0, [sg.Text(post_name,font=(None,15,'bold'),pad=((24,0),(20,0)),background_color='#FFFFFF',text_color='black')])
+    
     if other_post_exists[0]==False and other_post_exists[1]==False:
-        btn_to_add = [sg.Image(submit_btn,enable_events=True, key='submit-votes',pad=(9,10))]
+        btn_to_add = [sg.Image(SUBMIT_BTN,enable_events=True, key='submit-votes',pad=(9,10))]
     elif other_post_exists[1]==False:
-        btn_to_add = [sg.Image(prev_btn,enable_events=True, key=f'{other_post_exists[0]}',pad=(9,10),metadata=post_name),sg.Image(submit_btn,enable_events=True, key='submit-votes',pad=(9,10))]
+        btn_to_add = [sg.Image(PREV_BTN,enable_events=True, key=f'{other_post_exists[0]}',pad=(9,10),metadata=post_name),sg.Image(SUBMIT_BTN,enable_events=True, key='submit-votes',pad=(9,10))]
     elif other_post_exists[0]==False:
-        btn_to_add = [sg.Image(next_btn,enable_events=True, key=f'{other_post_exists[1]}',pad=(9,10),metadata=post_name)]
+        btn_to_add = [sg.Image(NEXT_BTN,enable_events=True, key=f'{other_post_exists[1]}',pad=(9,10),metadata=post_name)]
     else:
-        btn_to_add = [sg.Image(prev_btn,enable_events=True, key=f'{other_post_exists[0]}',pad=(9,10),metadata=post_name),sg.Image(next_btn,enable_events=True, key=f'{other_post_exists[1]}',pad=(9,10),metadata=post_name)]
+        btn_to_add = [sg.Image(PREV_BTN,enable_events=True, key=f'{other_post_exists[0]}',pad=(9,10),metadata=post_name),sg.Image(NEXT_BTN,enable_events=True, key=f'{other_post_exists[1]}',pad=(9,10),metadata=post_name)]
     
     temp_layout.append([sg.Text('',size=(0,1),font=(None,7),background_color='#FFFFFF')])
     if other_post_exists[0]==False:
@@ -134,13 +137,13 @@ def passwd_check_end_elections():
 # Function to make custom radio button work
 def check_radio(key:str, post_name:str, max_id:int, window:sg.Window):
     for i in range(1,max_id+1):
-        window[f'{post_name}-{i}-checkbox'].update(unchecked_box) 
+        window[f'{post_name}-{i}-checkbox'].update(UNCHECKED_BOX) 
         window[f'{post_name}-{i}-checkbox'].metadata[0] = False 
-    window[key].update(checked_box) 
+    window[key].update(CHECKED_BOX) 
     window[key].metadata[0] = True
 
 
-def display_voting_panel(election_name):
+def display_voting_panel(election_name:str):
     global post_names,posts_layout, passwd_correct,election_status
     passwd_correct, election_status = None, None
     user_quit = False
@@ -148,7 +151,7 @@ def display_voting_panel(election_name):
     post_names,posts_layout = [],[]
     user_election_name = election_name
     shown_admin_panel = False
-    header_layout = [sg.Frame('',[[sg.Text(f'{election_name} Election │ EasyPolls',text_color='#4E46B4',font=(None,18,'bold')),sg.Push(),sg.Image(end_election_btn,key='end-elections-btn',enable_events=True)]],expand_x=True)] 
+    header_layout = [sg.Frame('',[[sg.Text(f'{election_name} Election │ EasyPolls',text_color='#4E46B4',font=(None,15,'bold')),sg.Push(),sg.Image(END_ELECTION_BTN,key='end-elections-btn',enable_events=True)]],expand_x=True)] 
     layout = [header_layout]
     load_election_data()
 
@@ -183,7 +186,6 @@ def display_voting_panel(election_name):
                             flag = False
                             break
                     if flag==True:
-                        from src.admin_functions import error_popup
                         error_popup(f'Please cast your vote for the post of {i[0]}')
                         break
                 
@@ -197,7 +199,6 @@ def display_voting_panel(election_name):
                                 cursor.execute(f'UPDATE "{post_name}" SET votes = votes + 1 WHERE id={j}')
                                 conn.commit()
                                 break
-                    from src.admin_functions import error_popup
                     error_popup('Your votes have been successfully submitted.','#2E7D32')
                     break
 
@@ -209,7 +210,7 @@ def display_voting_panel(election_name):
                     cursor.execute('SELECT election_name FROM user_data')
                     election_name = cursor.fetchone()[0] # Get election name
                     result_path = resource_path(f'src\\results\\result-{election_name}.db')
-                    conn_result = sqlite3.connect(result_path)
+                    conn_result = connect(result_path)
                     cursor_result = conn_result.cursor()
                     for i in post_names:
                         post_name = i[0]

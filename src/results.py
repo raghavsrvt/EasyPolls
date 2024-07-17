@@ -1,12 +1,24 @@
-import sqlite3, PySimpleGUI as sg
-from src.set_theme import set_theme
+import PySimpleGUI as sg
+from sqlite3 import connect
+
 from src.get_absolute_path import resource_path
 from os import remove as rm_file
 from pandas import ExcelWriter, read_sql_query
-set_theme()
-screen_width, screen_height = sg.Window.get_screen_size()
-delete_btn = resource_path('src\\assets\\btn\\delete_secondary_btn.png')
-download_btn = resource_path('src\\assets\\btn\\download_btn.png')
+
+DELETE_BTN = resource_path(r'src\assets\btn\delete_secondary_btn.png')
+DOWNLOAD_BTN = resource_path(r'src\assets\btn\download_btn.png')
+OK_BTN = resource_path(r'src\assets\btn\ok_btn.png')
+RED = '#D33030'
+
+def error_popup(error_message:str,color=RED):
+    error_popup = sg.Window(error_message,[[sg.Text(error_message,text_color=color,font=(None,11,'bold'))],
+                                           [sg.Image(OK_BTN,key='ok-btn',enable_events=True)]],modal=True,finalize=True,resizable=True)
+    error_popup.bind('<Return>','_Enter')
+    while True:
+        event, values = error_popup.read()
+        if event =='_Enter' or event =='ok-btn':
+            break
+    error_popup.close()
 
 
 # To fix column expand problem
@@ -18,7 +30,7 @@ def configure_frame(event, canvas):
     canvas.configure(scrollregion=canvas.bbox("all"))
 
 
-def download_result(cursor_result:sqlite3.Cursor, conn_result:sqlite3.Connection, result_name:str):
+def download_result(cursor_result, conn_result, result_name:str):
     output_file_path = sg.PopupGetFolder('Please select the destination folder to save the result as an Excel file.',modal=True)
                 
     if output_file_path:
@@ -33,16 +45,13 @@ def download_result(cursor_result:sqlite3.Cursor, conn_result:sqlite3.Connection
                     download_query = f'SELECT name, votes FROM "{i[0]}"'
                     df = read_sql_query(download_query,conn_result)  # Get dataframe
                     df.to_excel(writer, sheet_name=i[0], index=False)  # Write new data on the file
-
-            from src.admin_functions import error_popup
             error_popup('Saved the result successfully!','#2E7D32')
 
         except OSError:  # If the selected path doesn't exsist
-            from src.admin_functions import error_popup
             error_popup('Cannot save file into a non-existent directory.')
 
 
-def get_result_layout(posts_for_result:list, cursor_result:sqlite3.Cursor):
+def get_result_layout(posts_for_result:list, cursor_result):
     result_layout = []
     for i in posts_for_result:
 
@@ -52,7 +61,7 @@ def get_result_layout(posts_for_result:list, cursor_result:sqlite3.Cursor):
         cursor_result.execute(f'SELECT MAX(votes) FROM "{i[0]}"')
         max_votes = cursor_result.fetchone()[0]
 
-        candidate_result_layout = [[sg.Text(f'Post: {i[0]}',font=(None,18,'bold'),pad=(10,10),background_color='#FFFFFF')]]  # Layout that will contain the results of candidates
+        candidate_result_layout = [[sg.Text(f'Post: {i[0]}',font=(None,14,'bold'),pad=(10,10),background_color='#FFFFFF')]]  # Layout that will contain the results of candidates
                     
         for j in curr_post_data:
 
@@ -71,7 +80,7 @@ def get_result_layout(posts_for_result:list, cursor_result:sqlite3.Cursor):
                 bar_color = ('#E2E2E2','#E2E2E2')
                         
             candidate_result_layout.extend([[vote_text],[sg.ProgressBar(j[1],size=(j[1]*0.2,6),bar_color=bar_color,pad=((10,0),(2,0)))]])
-            print('Name:',j[0])
+
         candidate_result_layout.extend([[sg.Text('',size=(0,1),font=(None,5),background_color='#FFFFFF')]])
         result_layout.append([sg.Column(candidate_result_layout,expand_x=True,background_color='#FFFFFF',pad=(10,10))])
     return result_layout
@@ -79,7 +88,7 @@ def get_result_layout(posts_for_result:list, cursor_result:sqlite3.Cursor):
 
 def show_result_window(result_name:str):
     
-    conn_result = sqlite3.connect(resource_path(f'src\\results\\result-{result_name}.db'))
+    conn_result = connect(resource_path(f'src\\results\\result-{result_name}.db'))
     cursor_result = conn_result.cursor()
 
     cursor_result.execute('SELECT name FROM sqlite_master WHERE type="table"')
@@ -89,8 +98,8 @@ def show_result_window(result_name:str):
     cursor_result.execute(f'SELECT SUM(votes) FROM "{posts_for_result[0][0]}"')
     tot_votes = cursor_result.fetchone()[0]
     result_layout = get_result_layout(posts_for_result, cursor_result)
-    result_header = [sg.Frame('',[[sg.Text(f'{result_name} Results',text_color='#4E46B4',font=(None,18,'bold'),pad=(15,10)),
-                                           sg.Push(),sg.Text(f'Total Votes: {tot_votes}',pad=(15,10)),sg.Image(download_btn,enable_events=True,key=f'download-result',pad=((10,10),(5,5)))]],expand_x=True)]
+    result_header = [sg.Frame('',[[sg.Text(f'{result_name} Results',text_color='#4E46B4',font=(None,15,'bold'),pad=(15,10)),
+                                           sg.Push(),sg.Text(f'Total Votes: {tot_votes}',pad=(15,10)),sg.Image(DOWNLOAD_BTN,enable_events=True,key=f'download-result',pad=((10,10),(5,5)))]],expand_x=True)]
 
     show_results_window = sg.Window(f'{result_name} Results  •  EasyPolls  •  Made by Raghav Srivastava (GitHub: raghavsrvt)',
                                     [result_header,[sg.Text('',size=(0,1),font=(None,5),background_color='#FFFFFF')],
@@ -143,12 +152,12 @@ def display_results(available_results):
     Parameters:
     - available_results (list): List of available results.
     """
-    results_layout = [[sg.Text('Results available: ',font=(None,18,'bold'),pad=(10,10))]]
+    results_layout = [[sg.Text('Results available: ',font=(None,15,'bold'),pad=(10,10))]]
     temp_layout = []  # layout for column
 
     for i in available_results:
         result_name = i.split('.')[0]
-        temp_layout.extend([[sg.pin(sg.Column([[sg.pin(sg.Text(result_name,pad=(10,5),key=f'link-{i}',font=(None,14,'underline'),enable_events=True,text_color='#4E46B4'),shrink=True),sg.Push(),sg.pin(sg.Image(delete_btn,enable_events=True,key=f'delete-{i}',pad=(10,5)),shrink=True)]], key=f'{result_name}-container',expand_x=True),shrink=True)]])
+        temp_layout.extend([[sg.pin(sg.Column([[sg.pin(sg.Text(result_name,pad=(10,5),key=f'link-{i}',font=(None,12,'underline'),enable_events=True,text_color='#4E46B4'),shrink=True),sg.Push(),sg.pin(sg.Image(DELETE_BTN,enable_events=True,key=f'delete-{i}',pad=(10,5)),shrink=True)]], key=f'{result_name}-container',expand_x=True),shrink=True)]])
 
     results_layout.append([sg.Column(temp_layout, scrollable=True, vertical_scroll_only=True,expand_x=True,expand_y=True)]) 
     results_window = sg.Window('Review Election Results', results_layout,size=(500,300),resizable=True,modal=True)

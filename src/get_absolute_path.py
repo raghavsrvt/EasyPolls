@@ -1,5 +1,5 @@
 import sys,os
-def resource_path(relative_path):
+def resource_path(relative_path:str):
     """ Get absolute path to resource, works for dev and for PyInstaller """
     try:
         base_path = sys._MEIPASS
