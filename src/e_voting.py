@@ -5,15 +5,15 @@ from shutil import rmtree
 from src.get_absolute_path import resource_path
 from src.admin_functions import error_popup
 
-SUBMIT_BTN = resource_path('src\\assets\\btn\\submit_btn.png')
-END_ELECTION_BTN = resource_path('src\\assets\\btn\\end_election_btn.png')
-PREV_BTN = resource_path('src\\assets\\btn\\prev_btn.png')
-NEXT_BTN = resource_path('src\\assets\\btn\\next_btn.png')
+SUBMIT_BTN = resource_path(r'src\assets\btn\submit_btn.png')
+END_ELECTION_BTN = resource_path(r'src\assets\btn\end_election_btn.png')
+PREV_BTN = resource_path(r'src\assets\btn\prev_btn.png')
+NEXT_BTN = resource_path(r'src\assets\btn\next_btn.png')
 GREY = '#E2E2E2'
 DARK_GREY = '#F5F5F5'
 
 # Connect to the SQLite database
-conn = connect(resource_path('src\\election.db'))
+conn = connect(resource_path(r'src\election.db'))
 cursor = conn.cursor()
 
 screen_width, screen_height = sg.Window.get_screen_size()
@@ -209,7 +209,7 @@ def display_voting_panel(election_name:str):
                     passwd_correct,election_status = None,None
                     cursor.execute('SELECT election_name FROM user_data')
                     election_name = cursor.fetchone()[0] # Get election name
-                    result_path = resource_path(f'src\\results\\result-{election_name}.db')
+                    result_path = resource_path(rf'src\results\result-{election_name}.db')
                     conn_result = connect(result_path)
                     cursor_result = conn_result.cursor()
                     for i in post_names:
@@ -230,7 +230,7 @@ def display_voting_panel(election_name:str):
                     for i in post_names:
                         post_name = i[0]
                         cursor.execute(f'DROP TABLE "{post_name}"')
-                        rmtree(resource_path(f'src\\assets\\post_img\\{post_name}'))
+                        rmtree(resource_path(rf'src\assets\post_img\{post_name}'))
                         conn.commit()
                     
                     cursor.execute('UPDATE user_data SET election_status = 0')  

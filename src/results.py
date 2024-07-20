@@ -40,7 +40,7 @@ def download_result(cursor_result, conn_result, result_name:str):
                             
         try:
 
-            with ExcelWriter(f'{output_file_path}\\result-{result_name}.xlsx') as writer:
+            with ExcelWriter(rf'{output_file_path}\result-{result_name}.xlsx') as writer:
                 for i in tables:
                     download_query = f'SELECT name, votes FROM "{i[0]}"'
                     df = read_sql_query(download_query,conn_result)  # Get dataframe
@@ -61,34 +61,34 @@ def get_result_layout(posts_for_result:list, cursor_result):
         cursor_result.execute(f'SELECT MAX(votes) FROM "{i[0]}"')
         max_votes = cursor_result.fetchone()[0]
 
-        candidate_result_layout = [[sg.Text(f'Post: {i[0]}',font=(None,14,'bold'),pad=(10,10),background_color='#FFFFFF')]]  # Layout that will contain the results of candidates
+        candidate_result_layout = [[sg.Text('',size=(0,1),font=(None,2),background_color='#FFFFFF')],[sg.Text(f'Post: {i[0]}',font=(None,13,'bold'),pad=(20,10),background_color='#FFFFFF')]]  # Layout that will contain the results of candidates
                     
         for j in curr_post_data:
 
             # Statements to highlight winner and to display vote/votes
             if j[1]==1 and j[1]==max_votes:
-                vote_text = sg.Text(f'{j[0]} ({j[1]} Vote)',background_color='#FFFFFF', pad=((10,5),(10,0)))
+                vote_text = sg.Text(f'{j[0]} ({j[1]} Vote)',background_color='#FFFFFF', pad=((20,5),(10,0)))
                 bar_color = ('#4E46B4','#4E46B4')
             elif j[1]==max_votes:
-                vote_text = sg.Text(f'{j[0]} ({j[1]} Votes)',background_color='#FFFFFF', pad=((10,5),(10,0)))
+                vote_text = sg.Text(f'{j[0]} ({j[1]} Votes)',background_color='#FFFFFF', pad=((20,5),(10,0)))
                 bar_color = ('#4E46B4','#4E46B4')
             elif j[1]==1:
-                vote_text = sg.Text(f'{j[0]} ({j[1]} Vote)',background_color='#FFFFFF', pad=((10,5),(10,0)))
+                vote_text = sg.Text(f'{j[0]} ({j[1]} Vote)',background_color='#FFFFFF', pad=((20,5),(10,0)))
                 bar_color = ('#E2E2E2','#E2E2E2')
             else:
-                vote_text = sg.Text(f'{j[0]} ({j[1]} Votes)',background_color='#FFFFFF', pad=((10,5),(10,0)))
+                vote_text = sg.Text(f'{j[0]} ({j[1]} Votes)',background_color='#FFFFFF', pad=((20,5),(10,0)))
                 bar_color = ('#E2E2E2','#E2E2E2')
                         
-            candidate_result_layout.extend([[vote_text],[sg.ProgressBar(j[1],size=(j[1]*0.2,6),bar_color=bar_color,pad=((10,0),(2,0)))]])
+            candidate_result_layout.extend([[vote_text],[sg.ProgressBar(j[1],size=(j[1]*0.2,6),bar_color=bar_color,pad=((20,0),(2,0)))]])
 
-        candidate_result_layout.extend([[sg.Text('',size=(0,1),font=(None,5),background_color='#FFFFFF')]])
+        candidate_result_layout.extend([[sg.Text('',size=(0,1),font=(None,7),background_color='#FFFFFF')]])
         result_layout.append([sg.Column(candidate_result_layout,expand_x=True,background_color='#FFFFFF',pad=(10,10))])
     return result_layout
 
 
 def show_result_window(result_name:str):
     
-    conn_result = connect(resource_path(f'src\\results\\result-{result_name}.db'))
+    conn_result = connect(resource_path(rf'src\results\result-{result_name}.db'))
     cursor_result = conn_result.cursor()
 
     cursor_result.execute('SELECT name FROM sqlite_master WHERE type="table"')
@@ -135,7 +135,7 @@ def show_result_window(result_name:str):
 def delete_result(result_event:str, results_window:sg.Window):
     file_name = result_event.split('-',1)[1]
     result_name = file_name.split('.',1)[0]
-    file_path = resource_path(f'src\\results\\result-{file_name}')
+    file_path = resource_path(rf'src\results\result-{file_name}')
     rm_file(file_path)
     results_window[f'{result_name}-container'].update(visible=False)
     results_window[result_event].update(visible=False)

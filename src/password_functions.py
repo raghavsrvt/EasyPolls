@@ -20,6 +20,7 @@ election_status = cursor.fetchone()
 if election_status:
     election_status = election_status[0]
 
+
 # Define the password input layout based on whether password exists or not
 def passwd_layout(passwd):
     if passwd:
@@ -32,16 +33,20 @@ def passwd_layout(passwd):
             [sg.Text('Confirm password: ',pad=(0,11)), sg.Input(key='passwd-2',size=(40),expand_y=True,password_char='•')]
         ],pad=((6,0),(11,11)))]
 
+
+
 # Hash a password using SHA-256
 def hash_passwd(passwd):
     passwd_bytes = passwd.encode('utf-8')
     hashed_passwd = hashlib.sha256(passwd_bytes).hexdigest()
     return hashed_passwd
 
+
 # Check if the entered password is correct
 def check_passwd_correct(values,passwd):
     passwd_entered = hash_passwd(values['passwd-1'])
     return passwd_entered == passwd[0]
+
 
 # Save the hashed password to a file
 def passwd_input(passwd):
