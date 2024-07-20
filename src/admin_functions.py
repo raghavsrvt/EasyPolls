@@ -659,6 +659,27 @@ def view_image(post_name:str, image_path:str, window:sg.Window):
     image_view_window.close()
 
 
+def validate_post_name(post_name:str, window:sg.Window, values:dict):
+    if post_name == '' or post_name.isspace():
+        error_popup("Post name can't be empty")  
+    elif post_name[0].isalpha()==False:
+        error_popup('Post name must start with a letter.')
+    elif post_name.replace(' ','').replace('_','').isalnum()==False:
+        error_popup('Post name can only contain alphabets, digits and special character \'_\'.')
+    elif table_exists(post_name):
+        error_popup('Post with this name already exists.')  
+    else:
+        try:
+            no_of_candidates = int(values['no-of-candidates'].strip())
+            if no_of_candidates < 2:
+                raise ValueError("No. of candidates < 2")
+            window['post-name'].update('')
+            window['no-of-candidates'].update('')
+            create_post_modal(post_name, no_of_candidates,window)
+        except ValueError:
+            error_popup('No. of candidates should at least be 2.')
+
+
 def change_id():
     """
     Change id of the posts whose candidates have been deleted
@@ -707,28 +728,7 @@ def display_admin_panel():
         if event != sg.WIN_CLOSED:
             if event == 'add-candidates-btn' or event=='post-name_Enter' or event=='no-of-candidates_Enter':
                 post_name = values['post-name'].strip()
-                
-                # Validate the post name
-                if post_name == '' or post_name.isspace():
-                    error_popup("Post name can't be empty")  
-                elif post_name[0].isalpha()==False:
-                    error_popup('Post name must start with a letter.')  
-                elif '-' in post_name:
-                    error_popup("Post name must not contain '-'.")
-                elif post_name.replace(' ','').replace('_','').isalnum()==False:
-                    error_popup('Post name can only contain alphabets, digits and special character \'_\'.')
-                elif table_exists(post_name):
-                    error_popup('Post with this name already exists.')  
-                else:
-                    try:
-                        no_of_candidates = int(values['no-of-candidates'].strip())
-                        if no_of_candidates < 2:
-                            raise ValueError("No. of candidates < 2")
-                        window['post-name'].update('')
-                        window['no-of-candidates'].update('')
-                        create_post_modal(post_name, no_of_candidates,window)
-                    except ValueError:
-                        error_popup('No. of candidates should at least be 2.')  
+                validate_post_name(post_name, window, values)
 
             # Edit post
             elif event.startswith('edit-') and window[event].metadata == 'Edit':
