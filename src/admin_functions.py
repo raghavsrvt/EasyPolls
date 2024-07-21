@@ -38,6 +38,10 @@ rm_candidates_posts = {} # Posts whose candidates have been removed
 
 
 def get_available_results():
+    """
+    Retrieve all available results from the local 'results' directory,
+    creating the directory if it does not already exist.
+    """
     global available_results
     if os.path.exists(resource_path(r'src\results')) == False:
         os.makedirs(resource_path(r'src\results'))
@@ -133,6 +137,14 @@ def load_posts(main_layout:list):
 
 
 def error_popup(error_message:str,color=RED):
+    """
+    Display an error popup
+
+    Args:
+        error_message (str): The error message which needs to be displayed
+        color (str): The color of the message. This popup can display both error messages, which are red,
+                    and success messages, which are green.
+    """
     error_popup = sg.Window(error_message,[[sg.Text(error_message,text_color=color,font=(None,11,'bold'))],
                                            [sg.Image(OK_BTN,key='ok-btn',enable_events=True)]],modal=True,finalize=True,resizable=True)
     error_popup.bind('<Return>','_Enter')
@@ -144,6 +156,13 @@ def error_popup(error_message:str,color=RED):
 
 
 def save_img(curr_path:str, img_path:str):
+    """
+    Save images to the local directory assets
+
+    Args:
+        curr_path (str): The path where the image is located currently
+        img_path (str): The path where the image will be saved.
+    """
     try:
         im = Image.open(curr_path)
         im.thumbnail(CANDIDATE_IMG_SIZE)  # Save the image in the resolution of 400 X 400 pixels
@@ -168,6 +187,9 @@ def table_exists(table_name:str):
 
 
 def del_elements(elements:list, window:sg.Window):
+    """
+    Delete the elements from a window
+    """
     for i in elements:
         del window.AllKeysDict[i]
 
@@ -183,6 +205,7 @@ def check_inputs_filled(element:sg.Window ,no_of_candidates:int, values:dict, po
         values (dict): Dictionary containing values from the GUI inputs.
         post_name (str): Name of the post.
         action (str): Action to perform ('create post' or 'save post' or 'add more candidates').
+        window (PySimpleGUI Window): The main window which displays the main GUI. Required while saving a post.
     """
     all_inputs_filled = True
     candidate_details = []
@@ -208,12 +231,19 @@ def check_inputs_filled(element:sg.Window ,no_of_candidates:int, values:dict, po
                 break
 
     if all_inputs_filled == True:
-        validate_inputs(post_name, candidate_details, no_of_candidates, action, element, window)
+        validate_modal_inputs(post_name, candidate_details, no_of_candidates, action, element, window)
 
 
-def validate_inputs(post_name:str, candidate_details:list, no_of_candidates:int,
+def validate_modal_inputs(post_name:str, candidate_details:list[tuple], no_of_candidates:int,
                     action:str, element:sg.Window, window):
-
+    """
+    Validate the inputs present in the modal created while adding candidates.
+    
+    Args:
+        post_name (str): The name of the post.
+        candidate_details (list[tuple]): List of tuples containing candidate details (name, image_path).
+        no_of_candidates (int): Total no of candidates.
+    """
     new_names = [i[0] for i in candidate_details]
     new_img_names = [os.path.basename(i[1]).split('.',1)[0] for i in candidate_details]
 
@@ -246,9 +276,14 @@ def validate_inputs(post_name:str, candidate_details:list, no_of_candidates:int,
         print('An error occurred.')
 
 
-def validate_new_candidates(post_name:str, new_img_names:list, new_names:list) -> tuple:
+def validate_new_candidates(post_name:str, new_img_names:list[str], new_names:list[str]) -> tuple:
     """
-
+    Validate the candidates that the user is trying to add to an already existing post.
+    
+    Args:
+        post_name (str): The name of the post.
+        new_img_names (list[str]): List of the images of all the candidates the user is trying to add.
+        new_names (list[str]): List of the names of all the candidates the user is trying to add.
     """
     img_same_name_exists = False
     same_candidate_exists = False
@@ -319,6 +354,14 @@ def delete_post(post_name:str, window:sg.Window):
 
 
 def add_more_candidates(post_name : str, candidates_info:list, window:sg.Window):
+    """
+    Add more candidates to an already existing post.
+
+    Args:
+        post_name (str): The name of the post.
+        candidates_info (list): List of tuples containing candidate information (name, image_path).
+        window (PySimpleGUI window): The main GUI window.
+    """
     cursor.execute(f'SELECT MAX(id) FROM "{post_name}"')
     key_val = cursor.fetchone()[0] + 1
     key_val_2 = key_val
@@ -359,11 +402,11 @@ def save_edited_post(post_name:str, max_id:int, candidates_info:list, window:sg.
     '''
     Update the entries in the specified post table with new candidate information.
 
-    Parameters:
-    - post_name (str): Name of the post table to update.
-    - max_id (int): Maximum ID of entries in the post table.
-    - candidates_info (list): List of tuples containing candidate information (name, image_path).
-    - window: PySimpleGUI window object to interact with GUI elements.
+    Args:
+        post_name (str): Name of the post table to update.
+        max_id (int): Maximum ID of entries in the post table.
+        candidates_info (list): List of tuples containing candidate information (name, image_path).
+        window: PySimpleGUI window object to interact with GUI elements.
     '''
 
     window[f'edit-{post_name}'].metadata = 'Edit'
@@ -454,6 +497,13 @@ def edit_post(post_name:str, window:sg.Window):
 
 
 def del_candidate(event:str, window:sg.Window):
+    """
+    Delete an individual candidate from a post.
+
+    Args:
+        event (str): The key of the delete button.
+        window (PySimpleGUI window): The main GUI window.
+    """
     info_list = event.split('-')
     post_name = info_list[1]
     if window[f'edit-{post_name}'].metadata == 'Edit':
@@ -497,6 +547,13 @@ def del_candidate(event:str, window:sg.Window):
 
 
 def cancel_edit(event:str, window:sg.Window):
+    """
+    Cancel editing the post and revert any changes.
+
+    Args:
+        event (str): The key of the cancel button.
+        window (PySimpleGUI window): The main GUI window.
+    """
     postname = event.split('-')[1]
 
     cursor.execute(f'SELECT name,image FROM "{postname}"')
@@ -635,6 +692,14 @@ def start_election():
             
 
 def view_image(post_name:str, image_path:str, window:sg.Window):
+    """
+    View image of the added candidate
+
+    Args:
+        post_name (str): The name of the post.
+        image_path (str): The path of the image.
+        window (PySimpleGUI window): The main GUI window.
+    """
     
     # If in edit mode then save image in 400X400 resolution to not crop the image.
     if window[f'edit-{post_name}'].metadata == 'Save':
@@ -645,7 +710,7 @@ def view_image(post_name:str, image_path:str, window:sg.Window):
             im.save(bytesio,format='png')
             image_view_layout = [[sg.Push(),sg.Image(data=bytesio.getvalue(),key='view-image'),sg.Push()]]
         except FileNotFoundError:
-            print('Image not found.')
+            error_popup('The image you tried to view does not exist.')
     else:
         image_view_layout = [[sg.Push(),sg.Image(image_path,key='view-image'),sg.Push()]]
 
@@ -660,6 +725,14 @@ def view_image(post_name:str, image_path:str, window:sg.Window):
 
 
 def validate_post_name(post_name:str, window:sg.Window, values:dict):
+    """
+    Validate post name
+
+    Args:
+        post_name (str): The name of the post.
+        window (PySimpleGUI window): The main GUI window.
+        values (dict): The values retreived from the window.read() function.
+    """
     if post_name == '' or post_name.isspace():
         error_popup("Post name can't be empty")  
     elif post_name[0].isalpha()==False:
@@ -682,7 +755,7 @@ def validate_post_name(post_name:str, window:sg.Window, values:dict):
 
 def change_id():
     """
-    Change id of the posts whose candidates have been deleted
+    Update the post IDs for candidates who have been deleted to ensure that all IDs are sequential.
     """
     if rm_candidates_posts:
         for i in rm_candidates_posts:
@@ -703,10 +776,10 @@ def change_id():
 # <======================================== DISPLAY THE ADMIN PANEL ===================================>
 
 def display_admin_panel():
-    global added_posts_heading, available_results
     """
     Display the main admin panel window to add new posts and candidates.
     """
+    global added_posts_heading, available_results
 
     added_posts_heading = [sg.Text('Added Posts:',font=(None,15,'bold'),pad=((10,0),(10,15)),key='added_posts_heading')]
     layout = [[sg.Text('',size=(0,1),font=(None,3),background_color='#FFFFFF')],
@@ -724,6 +797,7 @@ def display_admin_panel():
     window['post-name'].set_focus()
 
     while True:
+
         event, values = window.read()
         if event != sg.WIN_CLOSED:
             if event == 'add-candidates-btn' or event=='post-name_Enter' or event=='no-of-candidates_Enter':
