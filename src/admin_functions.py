@@ -748,6 +748,7 @@ def validate_post_name(post_name:str, window:sg.Window, values:dict):
                 raise ValueError("No. of candidates < 2")
             window['post-name'].update('')
             window['no-of-candidates'].update('')
+            window['post-name'].set_focus()
             create_post_modal(post_name, no_of_candidates,window)
         except ValueError:
             error_popup('No. of candidates should at least be 2.')

@@ -14,7 +14,7 @@ An awesome way of conducting electronic elections!
 
  ## About The Project
 
-![Product Screenshot](https://github.com/raghavsrvt/EasyPolls/assets/117651088/0ffc82b4-d3fc-4be3-8c06-edee7209f62c)
+![Product Screenshot](https://github.com/user-attachments/assets/96faa036-4ee9-4795-ac63-07608892fc71)
 
 
 EasyPolls is an electronic election software that allows you to create new polls or posts, add candidate information, conduct elections, and view the results in a poll-like format.
@@ -25,17 +25,12 @@ EasyPolls is an electronic election software that allows you to create new polls
 - [SQLite](https://sqlite.org/)
 
 ## Project Showcase
-![Add New Posts](https://github.com/raghavsrvt/EasyPolls/assets/117651088/b00159ac-5c9e-4fad-b1d3-2d8a31e047b1)
+![create_post](https://github.com/user-attachments/assets/e099d1d5-7e69-4435-b781-c7c620698d6f)
+![add_candidates](https://github.com/user-attachments/assets/993f24fe-8810-472f-b463-0b507fd2706b)
+![view_added_posts](https://github.com/user-attachments/assets/3ea64f6d-6730-47dc-829b-caaf95031831)
+![conduct_elections](https://github.com/user-attachments/assets/6f5b9e25-6e49-4ab8-bb68-c6915b7b9366)
+![view_results](https://github.com/user-attachments/assets/52f49779-0edd-4a0a-87e1-ab9159c3a62f)
 
-![Add Candidates](https://github.com/raghavsrvt/EasyPolls/assets/117651088/ff74cee2-53a4-4c88-8c48-521584d29be5)
-
-![View Added Posts](https://github.com/raghavsrvt/EasyPolls/assets/117651088/f4b717c5-1740-42f0-9df9-f3bf81d0442f)
-
-![Cast Your Vote](https://github.com/raghavsrvt/EasyPolls/assets/117651088/ea7c6156-3e02-4abb-897f-9d770f66eda8)
-
-![View Available Results](https://github.com/raghavsrvt/EasyPolls/assets/117651088/abf3607d-d819-4255-ad0b-8c9419dff52f)
-
-![Check Results](https://github.com/raghavsrvt/EasyPolls/assets/117651088/7b4cd757-6393-4876-aa1a-9212d8b8032b)
 
  ## Getting Started
 You can run the project directly by downloading files from this repository (recommended) or you can download the <a href='https://github.com/raghavsrvt/EasyPolls/blob/main/easypolls_setup.exe'>executable file</a> and install it.
