@@ -105,4 +105,4 @@ def display_password_window():
             break
 
     window.close()
-    return (show_admin_panel,election_status)
+    return show_admin_panel,election_status

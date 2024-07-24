@@ -94,7 +94,6 @@ def show_result_window(result_name:str):
     cursor_result.execute('SELECT name FROM sqlite_master WHERE type="table"')
     posts_for_result = cursor_result.fetchall()
     posts_for_result.remove(('sqlite_sequence',))
-
     cursor_result.execute(f'SELECT SUM(votes) FROM "{posts_for_result[0][0]}"')
     tot_votes = cursor_result.fetchone()[0]
     result_layout = get_result_layout(posts_for_result, cursor_result)
@@ -102,7 +101,7 @@ def show_result_window(result_name:str):
                                            sg.Push(),sg.Text(f'Total Votes: {tot_votes}',pad=(15,10)),sg.Image(DOWNLOAD_BTN,enable_events=True,key=f'download-result',pad=((10,10),(5,5)))]],expand_x=True)]
 
     show_results_window = sg.Window(f'{result_name} Results  •  EasyPolls  •  Made by Raghav Srivastava (GitHub: raghavsrvt)',
-                                    [result_header,[sg.Text('',size=(0,1),font=(None,5),background_color='#FFFFFF')],
+                                    [result_header,[sg.Text('',size=(0,1),font=(None,5))],
                                     [sg.Column(result_layout,expand_y=True,expand_x=True,scrollable=True,vertical_scroll_only=True, key='result_container')]],
                                     size=(550,500),resizable=True,modal=True,finalize=True)
     show_results_window.Finalize()

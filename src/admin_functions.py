@@ -4,7 +4,6 @@ from shutil import rmtree
 from PIL import Image
 from io import BytesIO
 from src.get_absolute_path import resource_path
-from src.results import display_results
 
 # Define paths for button images
 VIEW_IMG_BTN = resource_path(r'src\assets\btn\view_img_btn.png')
@@ -864,6 +863,7 @@ def display_admin_panel():
             
             # Check results
             elif event=='check-results':
+                from src.results import display_results
                 display_results(available_results)
                 get_available_results()
                 if not available_results:

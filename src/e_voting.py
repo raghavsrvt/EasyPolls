@@ -34,7 +34,7 @@ def display_candidates(post_name:str, other_post_exists:list):
 
     Parameters:
     - post_name (str): Name of the post table from which candidates will be fetched.
-    - other_post_exists (list): [f'post-btn-(nameofprevpost)', f'post-btn-(nameofnextpost)].
+    - other_post_exists (list): [f'post-btn-prev-(nameofprevpost)', f'post-btn-next-(nameofnextpost)].
                                 If prev or next post doesn't exist, they will be replaced by false
 
     Returns:
@@ -86,12 +86,11 @@ def display_candidates(post_name:str, other_post_exists:list):
     if other_post_exists[0]==False:
         return [sg.pin(sg.Column([[sg.Column(temp_layout,pad=((15,7.5)),background_color='#FFFFFF')],btn_to_add],key=f'post-container-{post_name}'),shrink=True)]
     elif other_post_exists[0]==False and other_post_exists[1]==False:
-        print('Reached here')
         return [sg.pin(sg.Column([[sg.Column(temp_layout,pad=((15,7.5)),background_color='#FFFFFF')],btn_to_add],key=f'post-container-{post_name}'),shrink=True)]
     else:
         return [sg.pin(sg.Column([[sg.Column(temp_layout,pad=((15,7.5)),background_color='#FFFFFF')],btn_to_add],key=f'post-container-{post_name}',visible=False),shrink=True)]
 
-        
+
 # Load available election data
 def load_election_data():
     """
@@ -116,11 +115,11 @@ def load_election_data():
         if i==0 and len(tables)==1:  # When there's only one post in the election
             temp_layout.append(display_candidates(post_name,other_post_exists=[False,False]))
         elif i==len(tables)-1:
-            temp_layout.append(display_candidates(post_name,other_post_exists=[f'post-btn-{tables[i-1][0]}',False]))
+            temp_layout.append(display_candidates(post_name,other_post_exists=[f'post-btn-prev-{tables[i-1][0]}',False]))
         elif i==0:
-            temp_layout.append(display_candidates(post_name,other_post_exists=[False,f'post-btn-{tables[i+1][0]}']))
+            temp_layout.append(display_candidates(post_name,other_post_exists=[False,f'post-btn-next-{tables[i+1][0]}']))
         else:
-            temp_layout.append(display_candidates(post_name,other_post_exists=[f'post-btn-{tables[i-1][0]}',f'post-btn-{tables[i+1][0]}']))
+            temp_layout.append(display_candidates(post_name,other_post_exists=[f'post-btn-prev-{tables[i-1][0]}',f'post-btn-next-{tables[i+1][0]}']))
         post_num+=1
     posts_layout.append(sg.Column(temp_layout,vertical_scroll_only=True,expand_y=True,scrollable=True,pad=(25,25),key='parent-container'))
 
@@ -241,7 +240,7 @@ def display_voting_panel(election_name:str):
                     break
             
             elif event.startswith('post-btn'):
-                post_to_view = event.split('-',2)[2]
+                post_to_view = event.split('-',3)[3]
                 curr_post = window[event].metadata
                 window[f'post-container-{curr_post}'].update(visible=False)
                 window[f'post-container-{post_to_view}'].update(visible=True)

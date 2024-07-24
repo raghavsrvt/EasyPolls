@@ -1,13 +1,20 @@
-from src.password_functions import display_password_window
 from ctypes import windll
 from src.set_theme import set_theme
+from os import path
+from src.get_absolute_path import resource_path
 windll.shcore.SetProcessDpiAwareness(1)
 passwd_correct, election_status = None, None
 set_theme()
-try:
-    passwd_correct, election_status = display_password_window()
-except UnboundLocalError:
-    print('The user closed the window.')
+
+if path.exists(resource_path(r'src\\election.db')):
+    try:
+        from src.password_functions import display_password_window
+        passwd_correct, election_status = display_password_window()
+    except UnboundLocalError:
+        print('The user closed the window.')
+else:
+    from src.onboarding import display_onboarding
+    display_onboarding()
 
 if passwd_correct:
     if election_status:
