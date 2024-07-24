@@ -25,7 +25,7 @@ EasyPolls is an electronic election software that allows you to create new polls
 - [SQLite](https://sqlite.org/)
 
 ## Project Showcase
-![create_post](https://github.com/user-attachments/assets/e099d1d5-7e69-4435-b781-c7c620698d6f)
+![create_post](https://github.com/user-attachments/assets/d166af00-e641-4865-9931-fd487ac40373)
 ![add_candidates](https://github.com/user-attachments/assets/993f24fe-8810-472f-b463-0b507fd2706b)
 ![view_added_posts](https://github.com/user-attachments/assets/3ea64f6d-6730-47dc-829b-caaf95031831)
 ![conduct_elections](https://github.com/user-attachments/assets/6f5b9e25-6e49-4ab8-bb68-c6915b7b9366)
