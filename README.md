@@ -23,6 +23,8 @@ EasyPolls is an electronic election software that allows you to create new polls
 - [Python](https://www.python.org/)
 - [PySimpleGUI-4-foss](https://github.com/andor-pierdelacabeza/PySimpleGUI-4-foss)
 - [SQLite](https://sqlite.org/)
+- [Pandas](https://pandas.pydata.org/)
+- [OpenPyXL](https://openpyxl.readthedocs.io/en/stable/)
 
 ## Project Showcase
 ![create_post](https://github.com/user-attachments/assets/03e37ffa-7fc7-4af4-9e41-657f7bfb51cf)
@@ -32,7 +34,7 @@ EasyPolls is an electronic election software that allows you to create new polls
 ![view_results](https://github.com/user-attachments/assets/52f49779-0edd-4a0a-87e1-ab9159c3a62f)
 
  ## Getting Started
-You can run the project directly by downloading files from this repository or you can download the <a href='https://github.com/raghavsrvt/EasyPolls/releases/download/v2.0/EasyPolls.exe'>executable file</a> and install it.
+You can run the project directly by downloading files from this repository or you can download the <a href='https://github.com/raghavsrvt/EasyPolls/releases/download/v2.0/EasyPolls_setup.64-bit.exe'>executable file</a> and install it.
 
 ### Prerequisite
 
@@ -40,6 +42,14 @@ You can run the project directly by downloading files from this repository or yo
 - PySimpleGUI-4-FOSS
   ```
   pip install PySimpleGUI-4-foss
+  ```
+- Pandas
+  ```
+  pip install pandas
+  ```
+- OpenPyXL
+  ```
+  pip install openpyxl
   ```
 ### Installation
 - Clone the repository or download it from GitHub.
@@ -55,5 +65,3 @@ Distributed under the MIT License. See [MIT License](https://opensource.org/lice
  ## Contact
 
 Raghav Srivastava: <a href='mailto:raghavsrvt.dev@gmail.com'>raghavsrvt.dev@gmail.com</a>
-
-Project Link: [https://github.com/raghavsrvt/EasyPolls](https://github.com/raghavsrvt/EasyPolls)

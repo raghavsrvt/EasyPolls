@@ -89,9 +89,8 @@ def style_added_posts(post_name:str, posts_layout:list):
         # Input fields for post name, image and browse button
         post_layout.append([sg.pin(sg.Column([display_candidate_info(i,post_name,key_val)],background_color='#FFFFFF',key=f'{post_name}-{key_val}'),shrink=True)])
         key_val+=1
-    post_layout.append([sg.Text('',size=(0,1),font=(None,1),background_color='#FFFFFF')])
     posts_layout.append([sg.pin(sg.Column(post_layout,pad=(5,10),key=f'{post_name}_container',background_color='#FFFFFF'))])
-    posts_layout.append([sg.Text('',size=(0,1),font=(None,4),background_color='#FFFFFF')])
+    posts_layout.append([sg.Text('',size=(0,1),font=(None,7))])
     return posts_layout
 
 
@@ -650,7 +649,7 @@ def create_post_modal(post_name:str, no_of_candidates:int, window:sg.Window, act
         ]])]
         column_layout.append(candidate_layout) 
 
-    column_layout.extend([[sg.Text('',size=(0,1),font=(None,2),background_color='#FFFFFF')],[sg.Image(ADD_POST_BTN if action=='create post' else ADD_CANDIDATES_LG_BTN, key=f'{post_name}-save-btn',pad=(5,5),enable_events=True)]]) 
+    column_layout.extend([[sg.Text('',size=(0,1),font=(None,2))],[sg.Image(ADD_POST_BTN if action=='create post' else ADD_CANDIDATES_LG_BTN, key=f'{post_name}-save-btn',pad=(5,5),enable_events=True)]]) 
     post_modal_layout.append([sg.Column(column_layout,vertical_scroll_only=True,scrollable=True,expand_x=True,expand_y=True)]) # type: ignore
     
     # Create and display the modal window
@@ -782,12 +781,12 @@ def display_admin_panel():
     global added_posts_heading, available_results
 
     added_posts_heading = [sg.Text('Added Posts:',font=(None,15,'bold'),pad=((10,0),(10,15)),key='added_posts_heading')]
-    layout = [[sg.Text('',size=(0,1),font=(None,3),background_color='#FFFFFF')],
+    layout = [[sg.Text('',size=(0,1),font=(None,6))],
               [sg.Text('Create Post:',font=(None,15,'bold'),pad=((9,0),(16,10)))],
             [sg.Column([[sg.Text('Post name: ',pad=(0,11)), sg.Input(key='post-name',size=(40,50),expand_y=True,expand_x=True)],
                         [sg.Text('No of candidates: ',pad=(0,11)), sg.Input(key='no-of-candidates',size=(40,50),expand_y=True)]],pad=(9,0))],
             [sg.Image(ADD_CANDIDATES_LG_BTN, key='add-candidates-btn',pad=(9,10),enable_events=True)],
-            [sg.Text('',size=(0,1),font=(None,3),background_color='#FFFFFF')]]
+            [sg.Text('',size=(0,1),font=(None,6))]]
 
     layout = load_posts(layout)
     window = sg.Window('Admin  •  EasyPolls  •  Made by Raghav Srivastava (GitHub: raghavsrvt)', layout, size=(SCREEN_WIDTH - 80, SCREEN_HEIGHT - 120), resizable=True,finalize=True)
