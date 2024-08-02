@@ -34,7 +34,7 @@ EasyPolls is an electronic election software that allows you to create new polls
 ![view_results](https://github.com/user-attachments/assets/52f49779-0edd-4a0a-87e1-ab9159c3a62f)
 
  ## Getting Started
-You can run the project directly by downloading files from this repository or you can download the <a href='https://github.com/raghavsrvt/EasyPolls/releases/download/v2.0/EasyPolls_setup.64-bit.exe'>executable file</a> and install it.
+You can run the project directly by downloading files from this repository or you can download the latest<a href='https://github.com/raghavsrvt/EasyPolls/releases/'>executable file</a> and install it.
 
 ### Prerequisite
 

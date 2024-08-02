@@ -698,7 +698,7 @@ def view_image(post_name:str, image_path:str, window:sg.Window):
         image_path (str): The path of the image.
         window (PySimpleGUI window): The main GUI window.
     """
-    
+    img_exists = True
     # If in edit mode then save image in 400X400 resolution to not crop the image.
     if window[f'edit-{post_name}'].metadata == 'Save':
         try:
@@ -708,18 +708,20 @@ def view_image(post_name:str, image_path:str, window:sg.Window):
             im.save(bytesio,format='png')
             image_view_layout = [[sg.Push(),sg.Image(data=bytesio.getvalue(),key='view-image'),sg.Push()]]
         except FileNotFoundError:
+            img_exists = False
             error_popup('The image you tried to view does not exist.')
     else:
         image_view_layout = [[sg.Push(),sg.Image(image_path,key='view-image'),sg.Push()]]
 
-    image_view_window = sg.Window('View image',image_view_layout,size=(400,400),element_justification='center')
+    if img_exists:
+        image_view_window = sg.Window('View image',image_view_layout,size=(400,400),element_justification='center', modal=True)
 
-    while True:
-        event,values = image_view_window.read() 
-        if event == sg.WIN_CLOSED:
-            break
+        while True:
+            event,values = image_view_window.read() 
+            if event == sg.WIN_CLOSED:
+                break
 
-    image_view_window.close()
+        image_view_window.close()
 
 
 def validate_post_name(post_name:str, window:sg.Window, values:dict):
