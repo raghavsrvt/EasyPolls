@@ -1,6 +1,6 @@
 import os
 def resource_path(relative_path:str):
-    """ Get absolute path to resource"""
+    """ Get absolute path to resource."""
     try:
         base_path = os.path.abspath(".")
     except:
