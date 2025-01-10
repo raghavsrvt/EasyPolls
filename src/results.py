@@ -100,7 +100,7 @@ def show_result_window(result_name:str):
     result_header = [sg.Frame('',[[sg.Text(f'{result_name} Results',text_color='#4E46B4',font=(None,15,'bold'),pad=(15,10)),
                                            sg.Push(),sg.Text(f'Total Votes: {tot_votes}',pad=(15,10)),sg.Image(DOWNLOAD_BTN,enable_events=True,key=f'download-result',pad=((10,10),(5,5)))]],expand_x=True)]
 
-    show_results_window = sg.Window(f'{result_name} Results  •  EasyPolls  •  Made by Raghav Srivastava (GitHub: raghavsrvt)',
+    show_results_window = sg.Window(f'{result_name} Election Results  •  EasyPolls  •  Made by Raghav Srivastava (GitHub: raghavsrvt)',
                                     [result_header,[sg.Text('',size=(0,1),font=(None,5))],
                                     [sg.Column(result_layout,expand_y=True,expand_x=True,scrollable=True,vertical_scroll_only=True, key='result_container')]],
                                     size=(550,500),resizable=True,modal=True,finalize=True)

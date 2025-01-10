@@ -152,7 +152,7 @@ def display_voting_panel(election_name:str):
     post_names,posts_layout = [],[]
     user_election_name = election_name
     shown_admin_panel = False
-    header_layout = [sg.Frame('',[[sg.Text(f'{election_name} │ EasyPolls',text_color='#4E46B4',font=(None,15,'bold')),sg.Push(),sg.Image(END_ELECTION_BTN,key='end-elections-btn',enable_events=True)]],expand_x=True)] 
+    header_layout = [sg.Frame('',[[sg.Text(f'{election_name} Election │ EasyPolls',text_color='#4E46B4',font=(None,15,'bold')),sg.Push(),sg.Image(END_ELECTION_BTN,key='end-elections-btn',enable_events=True)]],expand_x=True)] 
     layout = [header_layout]
     load_election_data()
 
